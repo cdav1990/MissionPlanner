@@ -1,0 +1,126 @@
+{
+  "id": "11",
+  "brand": "Canon",
+  "model": "EOS R5",
+  "sensorType": "Full Frame",
+  "sensorSizeId": "3",
+  "sensorWidth": 36,
+  "sensorHeight": 24,
+  "cropFactor": 1,
+  "imageWidth": 8192,
+  "imageHeight": 5464,
+  "megapixels": 44.8
+}
+{
+  "id": "103",
+  "brand": "DJI",
+  "model": "P1 24mm f/2.8 Fixed Focus",
+  "focalLength": 24,
+  "maxAperture": 2.8,
+  "minAperture": 11,
+  "compatibleWith": [
+    "Full Frame"
+  ]
+}
+{
+  "id": "104",
+  "brand": "DJI",
+  "model": "Mavic 3 Pro Hasselblad 24mm f/2.8",
+  "focalLength": 24,
+  "maxAperture": 2.8,
+  "minAperture": 11,
+  "compatibleWith": [
+    "1-inch"
+  ]
+}
+{
+  "id": "105",
+  "brand": "DJI",
+  "model": "Mavic 3 Pro 70mm f/2.8",
+  "focalLength": 70,
+  "maxAperture": 2.8,
+  "minAperture": 11,
+  "compatibleWith": [
+    "1-inch"
+  ]
+}
+{
+  "id": "106",
+  "brand": "DJI",
+  "model": "Mavic 3 Pro 166mm f/3.4",
+  "focalLength": 166,
+  "maxAperture": 3.4,
+  "minAperture": 11,
+  "compatibleWith": [
+    "1-inch"
+  ]
+}
+{
+  "id": "107",
+  "brand": "DJI",
+  "model": "Mavic 3 Classic 24mm f/2.8-11",
+  "focalLength": 24,
+  "maxAperture": 2.8,
+  "minAperture": 11,
+  "compatibleWith": [
+    "Micro Four Thirds",
+    "4/3 CMOS"
+  ]
+}
+{
+  "id": "108",
+  "brand": "DJI",
+  "model": "Mavic 3E Wide Camera 24mm f/2.8",
+  "focalLength": 24,
+  "maxAperture": 2.8,
+  "minAperture": 11,
+  "compatibleWith": [
+    "Micro Four Thirds",
+    "4/3 CMOS"
+  ]
+}
+{
+  "id": "109",
+  "brand": "DJI",
+  "model": "Mavic 2 Pro Hasselblad 28mm f/2.8",
+  "focalLength": 28,
+  "maxAperture": 2.8,
+  "minAperture": 11,
+  "compatibleWith": [
+    "1-inch"
+  ]
+}
+{
+  "id": "110",
+  "brand": "DJI",
+  "model": "Mavic 2 Zoom 24-48mm f/2.8-3.8",
+  "focalLength": 36,
+  "maxAperture": 2.8,
+  "minAperture": 11,
+  "compatibleWith": [
+    "1-inch",
+    "1/2.3-inch"
+  ]
+}
+{
+  "id": "111",
+  "brand": "DJI",
+  "model": "P1 35mm f/2.8 Fixed Focus",
+  "focalLength": 35,
+  "maxAperture": 2.8,
+  "minAperture": 11,
+  "compatibleWith": [
+    "Full Frame"
+  ]
+}
+{
+  "id": "112",
+  "brand": "DJI",
+  "model": "P1 50mm f/2.8 Fixed Focus",
+  "focalLength": 50,
+  "maxAperture": 2.8,
+  "minAperture": 11,
+  "compatibleWith": [
+    "Full Frame"
+  ]
+}

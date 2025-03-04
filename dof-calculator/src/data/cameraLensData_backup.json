@@ -1,0 +1,1796 @@
+{
+  "sensorSizes": [
+    {
+      "id": "1",
+      "name": "Large Format",
+      "description": "4×5, 5×7, 8×10 inches"
+    },
+    {
+      "id": "2",
+      "name": "Medium Format",
+      "description": "6×4.5, 6×6, 6×7 cm"
+    },
+    {
+      "id": "3",
+      "name": "Full Frame",
+      "description": "36×24 mm (35mm film equivalent)"
+    },
+    {
+      "id": "4",
+      "name": "APS-C",
+      "description": "~24×16 mm (1.5-1.6x crop)"
+    },
+    {
+      "id": "5",
+      "name": "Micro Four Thirds",
+      "description": "17.3×13 mm (2x crop)"
+    },
+    {
+      "id": "6",
+      "name": "1-inch",
+      "description": "13.2×8.8 mm (2.7x crop)"
+    }
+  ],
+  "cameras": [
+    {
+      "id": "41",
+      "brand": "Blackmagic",
+      "model": "URSA 17K",
+      "sensorType": "Large Format",
+      "sensorSizeId": "1",
+      "sensorWidth": 47.5,
+      "sensorHeight": 25.2,
+      "cropFactor": 0.75,
+      "imageWidth": 17824,
+      "imageHeight": 9384,
+      "megapixels": 167.3
+    },
+    {
+      "id": "1",
+      "brand": "Sinar",
+      "model": "F2",
+      "sensorType": "Large Format",
+      "sensorSizeId": "1",
+      "sensorWidth": 127,
+      "sensorHeight": 101.6,
+      "cropFactor": 0.28,
+      "imageWidth": 16000,
+      "imageHeight": 12800,
+      "megapixels": 204.8
+    },
+    {
+      "id": "4",
+      "brand": "Fujifilm",
+      "model": "GFX 100",
+      "sensorType": "Medium Format",
+      "sensorSizeId": "2",
+      "sensorWidth": 43.8,
+      "sensorHeight": 32.9,
+      "cropFactor": 0.79,
+      "imageWidth": 11648,
+      "imageHeight": 8736,
+      "megapixels": 101.8
+    },
+    {
+      "id": "91",
+      "brand": "Fujifilm",
+      "model": "GFX 100 II",
+      "sensorType": "Medium Format",
+      "sensorSizeId": "2",
+      "sensorWidth": 43.8,
+      "sensorHeight": 32.9,
+      "cropFactor": 0.79,
+      "imageWidth": 11648,
+      "imageHeight": 8736,
+      "megapixels": 101.8
+    },
+    {
+      "id": "5",
+      "brand": "Fujifilm",
+      "model": "GFX 100S",
+      "sensorType": "Medium Format",
+      "sensorSizeId": "2",
+      "sensorWidth": 43.8,
+      "sensorHeight": 32.9,
+      "cropFactor": 0.79,
+      "imageWidth": 11648,
+      "imageHeight": 8736,
+      "megapixels": 101.8
+    },
+    {
+      "id": "7",
+      "brand": "Fujifilm",
+      "model": "GFX 50R",
+      "sensorType": "Medium Format",
+      "sensorSizeId": "2",
+      "sensorWidth": 43.8,
+      "sensorHeight": 32.9,
+      "cropFactor": 0.79,
+      "imageWidth": 8256,
+      "imageHeight": 6192,
+      "megapixels": 51.1
+    },
+    {
+      "id": "6",
+      "brand": "Fujifilm",
+      "model": "GFX 50S",
+      "sensorType": "Medium Format",
+      "sensorSizeId": "2",
+      "sensorWidth": 43.8,
+      "sensorHeight": 32.9,
+      "cropFactor": 0.79,
+      "imageWidth": 8256,
+      "imageHeight": 6192,
+      "megapixels": 51.1
+    },
+    {
+      "id": "8",
+      "brand": "Fujifilm",
+      "model": "GFX 50S II",
+      "sensorType": "Medium Format",
+      "sensorSizeId": "2",
+      "sensorWidth": 43.8,
+      "sensorHeight": 32.9,
+      "cropFactor": 0.79,
+      "imageWidth": 8256,
+      "imageHeight": 6192,
+      "megapixels": 51.1
+    },
+    {
+      "id": "2",
+      "brand": "Hasselblad",
+      "model": "907X",
+      "sensorType": "Medium Format",
+      "sensorSizeId": "2",
+      "sensorWidth": 53.4,
+      "sensorHeight": 40,
+      "cropFactor": 0.64,
+      "imageWidth": 11656,
+      "imageHeight": 8742,
+      "megapixels": 102
+    },
+    {
+      "id": "56",
+      "brand": "Hasselblad",
+      "model": "X2D 100C",
+      "sensorType": "Medium Format",
+      "sensorSizeId": "2",
+      "sensorWidth": 53.4,
+      "sensorHeight": 40,
+      "cropFactor": 0.64,
+      "imageWidth": 11656,
+      "imageHeight": 8742,
+      "megapixels": 100
+    },
+    {
+      "id": "3",
+      "brand": "Phase One",
+      "model": "XF IQ4",
+      "sensorType": "Medium Format",
+      "sensorSizeId": "2",
+      "sensorWidth": 53.4,
+      "sensorHeight": 40,
+      "cropFactor": 0.64,
+      "imageWidth": 14204,
+      "imageHeight": 10652,
+      "megapixels": 151.3
+    },
+    {
+      "id": "54",
+      "brand": "Phase One",
+      "model": "iXM-100",
+      "sensorType": "Medium Format",
+      "sensorSizeId": "2",
+      "sensorWidth": 53.4,
+      "sensorHeight": 40,
+      "cropFactor": 0.64,
+      "imageWidth": 11664,
+      "imageHeight": 8750,
+      "megapixels": 100
+    },
+    {
+      "id": "55",
+      "brand": "Phase One",
+      "model": "iXM-150",
+      "sensorType": "Medium Format",
+      "sensorSizeId": "2",
+      "sensorWidth": 53.4,
+      "sensorHeight": 40,
+      "cropFactor": 0.64,
+      "imageWidth": 14204,
+      "imageHeight": 10652,
+      "megapixels": 150
+    },
+    {
+      "id": "40",
+      "brand": "Blackmagic",
+      "model": "URSA Cine 12K",
+      "sensorType": "Full Frame",
+      "sensorSizeId": "3",
+      "sensorWidth": 35.64,
+      "sensorHeight": 23.32,
+      "cropFactor": 1.01,
+      "imageWidth": 12288,
+      "imageHeight": 6480,
+      "megapixels": 79.6
+    },
+    {
+      "id": "9",
+      "brand": "Canon",
+      "model": "EOS 5D Mark IV",
+      "sensorType": "Full Frame",
+      "sensorSizeId": "3",
+      "sensorWidth": 36,
+      "sensorHeight": 24,
+      "cropFactor": 1,
+      "imageWidth": 6720,
+      "imageHeight": 4480,
+      "megapixels": 30.1
+    },
+    {
+      "id": "14",
+      "brand": "Canon",
+      "model": "EOS R",
+      "sensorType": "Full Frame",
+      "sensorSizeId": "3",
+      "sensorWidth": 36,
+      "sensorHeight": 24,
+      "cropFactor": 1,
+      "imageWidth": 6720,
+      "imageHeight": 4480,
+      "megapixels": 30.1
+    },
+    {
+      "id": "10",
+      "brand": "Canon",
+      "model": "EOS R3",
+      "sensorType": "Full Frame",
+      "sensorSizeId": "3",
+      "sensorWidth": 36,
+      "sensorHeight": 24,
+      "cropFactor": 1,
+      "imageWidth": 6000,
+      "imageHeight": 4000,
+      "megapixels": 24
+    },
+    {
+      "id": "11",
+      "brand": "Canon",
+      "model": "EOS R5",
+      "sensorType": "Full Frame",
+      "sensorSizeId": "3",
+      "sensorWidth": 36,
+      "sensorHeight": 24,
+      "cropFactor": 1,
+      "imageWidth": 8192,
+      "imageHeight": 5464,
+      "megapixels": 44.8
+    },
+    {
+      "id": "90",
+      "brand": "Canon",
+      "model": "EOS R5 Mark II",
+      "sensorType": "Full Frame",
+      "sensorSizeId": "3",
+      "sensorWidth": 36,
+      "sensorHeight": 24,
+      "cropFactor": 1,
+      "imageWidth": 9504,
+      "imageHeight": 6336,
+      "megapixels": 60.2
+    },
+    {
+      "id": "12",
+      "brand": "Canon",
+      "model": "EOS R6",
+      "sensorType": "Full Frame",
+      "sensorSizeId": "3",
+      "sensorWidth": 36,
+      "sensorHeight": 24,
+      "cropFactor": 1,
+      "imageWidth": 5472,
+      "imageHeight": 3648,
+      "megapixels": 20
+    },
+    {
+      "id": "13",
+      "brand": "Canon",
+      "model": "EOS R6 Mark II",
+      "sensorType": "Full Frame",
+      "sensorSizeId": "3",
+      "sensorWidth": 36,
+      "sensorHeight": 24,
+      "cropFactor": 1,
+      "imageWidth": 6000,
+      "imageHeight": 4000,
+      "megapixels": 24
+    },
+    {
+      "id": "16",
+      "brand": "Canon",
+      "model": "EOS R8",
+      "sensorType": "Full Frame",
+      "sensorSizeId": "3",
+      "sensorWidth": 36,
+      "sensorHeight": 24,
+      "cropFactor": 1,
+      "imageWidth": 6000,
+      "imageHeight": 4000,
+      "megapixels": 24
+    },
+    {
+      "id": "15",
+      "brand": "Canon",
+      "model": "EOS RP",
+      "sensorType": "Full Frame",
+      "sensorSizeId": "3",
+      "sensorWidth": 36,
+      "sensorHeight": 24,
+      "cropFactor": 1,
+      "imageWidth": 6240,
+      "imageHeight": 4160,
+      "megapixels": 26.2
+    },
+    {
+      "id": "21",
+      "brand": "Nikon",
+      "model": "D850",
+      "sensorType": "Full Frame",
+      "sensorSizeId": "3",
+      "sensorWidth": 36,
+      "sensorHeight": 24,
+      "cropFactor": 1,
+      "imageWidth": 8256,
+      "imageHeight": 5504,
+      "megapixels": 45.4
+    },
+    {
+      "id": "22",
+      "brand": "Sony",
+      "model": "Alpha 1",
+      "sensorType": "Full Frame",
+      "sensorSizeId": "3",
+      "sensorWidth": 36,
+      "sensorHeight": 24,
+      "cropFactor": 1,
+      "imageWidth": 8640,
+      "imageHeight": 5760,
+      "megapixels": 50.1
+    },
+    {
+      "id": "41",
+      "brand": "Sony",
+      "model": "Alpha 1 Mark II",
+      "sensorType": "Full Frame",
+      "sensorSizeId": "3",
+      "sensorWidth": 36,
+      "sensorHeight": 24,
+      "cropFactor": 1,
+      "imageWidth": 8640,
+      "imageHeight": 5760,
+      "megapixels": 50
+    },
+    {
+      "id": "27",
+      "brand": "Sony",
+      "model": "A7 III",
+      "sensorType": "Full Frame",
+      "sensorSizeId": "3",
+      "sensorWidth": 36,
+      "sensorHeight": 24,
+      "cropFactor": 1,
+      "imageWidth": 6000,
+      "imageHeight": 4000,
+      "megapixels": 24
+    },
+    {
+      "id": "38",
+      "brand": "Sony",
+      "model": "A7C",
+      "sensorType": "Full Frame",
+      "sensorSizeId": "3",
+      "sensorWidth": 36,
+      "sensorHeight": 24,
+      "cropFactor": 1,
+      "imageWidth": 6000,
+      "imageHeight": 4000,
+      "megapixels": 24
+    },
+    {
+      "id": "39",
+      "brand": "Sony",
+      "model": "A7C R",
+      "sensorType": "Full Frame",
+      "sensorSizeId": "3",
+      "sensorWidth": 36,
+      "sensorHeight": 24,
+      "cropFactor": 1,
+      "imageWidth": 9504,
+      "imageHeight": 6336,
+      "megapixels": 61
+    },
+    {
+      "id": "40",
+      "brand": "Sony",
+      "model": "A7CR",
+      "sensorType": "Full Frame",
+      "sensorSizeId": "3",
+      "sensorWidth": 36,
+      "sensorHeight": 24,
+      "cropFactor": 1,
+      "imageWidth": 9504,
+      "imageHeight": 6336,
+      "megapixels": 61
+    },
+    {
+      "id": "24",
+      "brand": "Sony",
+      "model": "Alpha 7 IV",
+      "sensorType": "Full Frame",
+      "sensorSizeId": "3",
+      "sensorWidth": 36,
+      "sensorHeight": 24,
+      "cropFactor": 1,
+      "imageWidth": 7008,
+      "imageHeight": 4672,
+      "megapixels": 33
+    },
+    {
+      "id": "37",
+      "brand": "Sony",
+      "model": "Alpha 7R IV",
+      "sensorType": "Full Frame",
+      "sensorSizeId": "3",
+      "sensorWidth": 35.7,
+      "sensorHeight": 23.8,
+      "cropFactor": 1,
+      "imageWidth": 9504,
+      "imageHeight": 6336,
+      "megapixels": 61
+    },
+    {
+      "id": "23",
+      "brand": "Sony",
+      "model": "Alpha 7R V",
+      "sensorType": "Full Frame",
+      "sensorSizeId": "3",
+      "sensorWidth": 36,
+      "sensorHeight": 24,
+      "cropFactor": 1,
+      "imageWidth": 9504,
+      "imageHeight": 6336,
+      "megapixels": 61
+    },
+    {
+      "id": "25",
+      "brand": "Sony",
+      "model": "Alpha 7S III",
+      "sensorType": "Full Frame",
+      "sensorSizeId": "3",
+      "sensorWidth": 36,
+      "sensorHeight": 24,
+      "cropFactor": 1,
+      "imageWidth": 4240,
+      "imageHeight": 2832,
+      "megapixels": 12
+    },
+    {
+      "id": "26",
+      "brand": "Sony",
+      "model": "Alpha 9 III",
+      "sensorType": "Full Frame",
+      "sensorSizeId": "3",
+      "sensorWidth": 36,
+      "sensorHeight": 24,
+      "cropFactor": 1,
+      "imageWidth": 6000,
+      "imageHeight": 4000,
+      "megapixels": 24
+    },
+    {
+      "id": "42",
+      "brand": "Sony",
+      "model": "ZV-E1",
+      "sensorType": "Full Frame",
+      "sensorSizeId": "3",
+      "sensorWidth": 36,
+      "sensorHeight": 24,
+      "cropFactor": 1,
+      "imageWidth": 4240,
+      "imageHeight": 2832,
+      "megapixels": 12
+    },
+    {
+      "id": "39",
+      "brand": "Blackmagic",
+      "model": "Pocket Cinema Camera 6K",
+      "sensorType": "APS-C",
+      "sensorSizeId": "4",
+      "sensorWidth": 23.1,
+      "sensorHeight": 12.99,
+      "cropFactor": 1.56,
+      "imageWidth": 6144,
+      "imageHeight": 3456,
+      "megapixels": 21.2
+    },
+    {
+      "id": "20",
+      "brand": "Canon",
+      "model": "EOS R100",
+      "sensorType": "APS-C",
+      "sensorSizeId": "4",
+      "sensorWidth": 22.3,
+      "sensorHeight": 14.9,
+      "cropFactor": 1.6,
+      "imageWidth": 5184,
+      "imageHeight": 3456,
+      "megapixels": 18
+    },
+    {
+      "id": "18",
+      "brand": "Canon",
+      "model": "EOS R10",
+      "sensorType": "APS-C",
+      "sensorSizeId": "4",
+      "sensorWidth": 22.3,
+      "sensorHeight": 14.9,
+      "cropFactor": 1.6,
+      "imageWidth": 6000,
+      "imageHeight": 4000,
+      "megapixels": 24
+    },
+    {
+      "id": "19",
+      "brand": "Canon",
+      "model": "EOS R50",
+      "sensorType": "APS-C",
+      "sensorSizeId": "4",
+      "sensorWidth": 22.3,
+      "sensorHeight": 14.9,
+      "cropFactor": 1.6,
+      "imageWidth": 6000,
+      "imageHeight": 4000,
+      "megapixels": 24
+    },
+    {
+      "id": "17",
+      "brand": "Canon",
+      "model": "EOS R7",
+      "sensorType": "APS-C",
+      "sensorSizeId": "4",
+      "sensorWidth": 22.3,
+      "sensorHeight": 14.9,
+      "cropFactor": 1.6,
+      "imageWidth": 6960,
+      "imageHeight": 4640,
+      "megapixels": 32.5
+    },
+    {
+      "id": "32",
+      "brand": "Fujifilm",
+      "model": "X-T4",
+      "sensorType": "APS-C",
+      "sensorSizeId": "4",
+      "sensorWidth": 23.5,
+      "sensorHeight": 15.6,
+      "cropFactor": 1.5,
+      "imageWidth": 6240,
+      "imageHeight": 4160,
+      "megapixels": 26
+    },
+    {
+      "id": "33",
+      "brand": "Fujifilm",
+      "model": "X-T5",
+      "sensorType": "APS-C",
+      "sensorSizeId": "4",
+      "sensorWidth": 23.5,
+      "sensorHeight": 15.6,
+      "cropFactor": 1.5,
+      "imageWidth": 6864,
+      "imageHeight": 4576,
+      "megapixels": 40.2
+    },
+    {
+      "id": "35",
+      "brand": "Fujifilm",
+      "model": "X-H2",
+      "sensorType": "APS-C",
+      "sensorSizeId": "4",
+      "sensorWidth": 23.5,
+      "sensorHeight": 15.6,
+      "cropFactor": 1.5,
+      "imageWidth": 6864,
+      "imageHeight": 4576,
+      "megapixels": 40.2
+    },
+    {
+      "id": "36",
+      "brand": "Fujifilm",
+      "model": "X-H2S",
+      "sensorType": "APS-C",
+      "sensorSizeId": "4",
+      "sensorWidth": 23.5,
+      "sensorHeight": 15.6,
+      "cropFactor": 1.5,
+      "imageWidth": 6240,
+      "imageHeight": 4160,
+      "megapixels": 26
+    },
+    {
+      "id": "34",
+      "brand": "Fujifilm",
+      "model": "X-Pro3",
+      "sensorType": "APS-C",
+      "sensorSizeId": "4",
+      "sensorWidth": 23.5,
+      "sensorHeight": 15.6,
+      "cropFactor": 1.5,
+      "imageWidth": 6240,
+      "imageHeight": 4160,
+      "megapixels": 26
+    },
+    {
+      "id": "31",
+      "brand": "Nikon",
+      "model": "D7500",
+      "sensorType": "APS-C",
+      "sensorSizeId": "4",
+      "sensorWidth": 23.5,
+      "sensorHeight": 15.7,
+      "cropFactor": 1.5,
+      "imageWidth": 5568,
+      "imageHeight": 3712,
+      "megapixels": 20.9
+    },
+    {
+      "id": "30",
+      "brand": "Sony",
+      "model": "Alpha 6400",
+      "sensorType": "APS-C",
+      "sensorSizeId": "4",
+      "sensorWidth": 23.5,
+      "sensorHeight": 15.6,
+      "cropFactor": 1.5,
+      "imageWidth": 6000,
+      "imageHeight": 4000,
+      "megapixels": 24
+    },
+    {
+      "id": "29",
+      "brand": "Sony",
+      "model": "Alpha 6600",
+      "sensorType": "APS-C",
+      "sensorSizeId": "4",
+      "sensorWidth": 23.5,
+      "sensorHeight": 15.6,
+      "cropFactor": 1.5,
+      "imageWidth": 6000,
+      "imageHeight": 4000,
+      "megapixels": 24
+    },
+    {
+      "id": "28",
+      "brand": "Sony",
+      "model": "Alpha 6700",
+      "sensorType": "APS-C",
+      "sensorSizeId": "4",
+      "sensorWidth": 23.5,
+      "sensorHeight": 15.6,
+      "cropFactor": 1.5,
+      "imageWidth": 6192,
+      "imageHeight": 4128,
+      "megapixels": 26
+    },
+    {
+      "id": "43",
+      "brand": "Sony",
+      "model": "ZV-E10",
+      "sensorType": "APS-C",
+      "sensorSizeId": "4",
+      "sensorWidth": 23.5,
+      "sensorHeight": 15.6,
+      "cropFactor": 1.5,
+      "imageWidth": 6000,
+      "imageHeight": 4000,
+      "megapixels": 24
+    },
+    {
+      "id": "38",
+      "brand": "Olympus",
+      "model": "OM-D E-M1 Mark III",
+      "sensorType": "Micro Four Thirds",
+      "sensorSizeId": "5",
+      "sensorWidth": 17.3,
+      "sensorHeight": 13,
+      "cropFactor": 2,
+      "imageWidth": 5184,
+      "imageHeight": 3888,
+      "megapixels": 20.4
+    },
+    {
+      "id": "37",
+      "brand": "Panasonic",
+      "model": "GH5",
+      "sensorType": "Micro Four Thirds",
+      "sensorSizeId": "5",
+      "sensorWidth": 17.3,
+      "sensorHeight": 13,
+      "cropFactor": 2,
+      "imageWidth": 5184,
+      "imageHeight": 3888,
+      "megapixels": 20.3
+    },
+    {
+      "id": "97",
+      "brand": "DJI",
+      "model": "P1",
+      "sensorType": "Full Frame",
+      "sensorSizeId": "3",
+      "sensorWidth": 35.9,
+      "sensorHeight": 24,
+      "cropFactor": 1,
+      "imageWidth": 8192,
+      "imageHeight": 5460,
+      "megapixels": 45
+    },
+    {
+      "id": "98",
+      "brand": "DJI",
+      "model": "Mavic 3 Pro",
+      "sensorType": "1-inch",
+      "sensorSizeId": "6",
+      "sensorWidth": 13.2,
+      "sensorHeight": 8.8,
+      "cropFactor": 2.7,
+      "imageWidth": 5280,
+      "imageHeight": 3956,
+      "megapixels": 20
+    },
+    {
+      "id": "99",
+      "brand": "DJI",
+      "model": "Mavic 3 Classic",
+      "sensorType": "4/3 CMOS",
+      "sensorSizeId": "5",
+      "sensorWidth": 17.3,
+      "sensorHeight": 13,
+      "cropFactor": 2,
+      "imageWidth": 5280,
+      "imageHeight": 3956,
+      "megapixels": 20
+    },
+    {
+      "id": "100",
+      "brand": "DJI",
+      "model": "Mavic 3 Enterprise",
+      "sensorType": "4/3 CMOS",
+      "sensorSizeId": "5",
+      "sensorWidth": 17.3,
+      "sensorHeight": 13,
+      "cropFactor": 2,
+      "imageWidth": 5280,
+      "imageHeight": 3956,
+      "megapixels": 20
+    },
+    {
+      "id": "101",
+      "brand": "DJI",
+      "model": "Mavic 2 Pro",
+      "sensorType": "1-inch",
+      "sensorSizeId": "6",
+      "sensorWidth": 13.2,
+      "sensorHeight": 8.8,
+      "cropFactor": 2.7,
+      "imageWidth": 5472,
+      "imageHeight": 3648,
+      "megapixels": 20
+    },
+    {
+      "id": "102",
+      "brand": "DJI",
+      "model": "Mavic 2 Zoom",
+      "sensorType": "1/2.3-inch",
+      "sensorSizeId": "6",
+      "sensorWidth": 6.17,
+      "sensorHeight": 4.55,
+      "cropFactor": 5.6,
+      "imageWidth": 4000,
+      "imageHeight": 3000,
+      "megapixels": 12
+    },
+    {
+      "id": "103",
+      "brand": "DJI",
+      "model": "P1 24mm f/2.8 Fixed Focus",
+      "focalLength": 24,
+      "maxAperture": 2.8,
+      "minAperture": 11,
+      "compatibleWith": ["Full Frame"]
+    },
+    {
+      "id": "104",
+      "brand": "DJI",
+      "model": "Mavic 3 Pro Hasselblad 24mm f/2.8",
+      "focalLength": 24,
+      "maxAperture": 2.8,
+      "minAperture": 11,
+      "compatibleWith": ["1-inch"]
+    },
+    {
+      "id": "105",
+      "brand": "DJI",
+      "model": "Mavic 3 Pro 70mm f/2.8",
+      "focalLength": 70,
+      "maxAperture": 2.8,
+      "minAperture": 11,
+      "compatibleWith": ["1-inch"]
+    },
+    {
+      "id": "106",
+      "brand": "DJI",
+      "model": "Mavic 3 Pro 166mm f/3.4",
+      "focalLength": 166,
+      "maxAperture": 3.4,
+      "minAperture": 11,
+      "compatibleWith": ["1-inch"]
+    },
+    {
+      "id": "107",
+      "brand": "DJI",
+      "model": "Mavic 3 Classic 24mm f/2.8-11",
+      "focalLength": 24,
+      "maxAperture": 2.8,
+      "minAperture": 11,
+      "compatibleWith": ["Micro Four Thirds", "4/3 CMOS"]
+    },
+    {
+      "id": "108",
+      "brand": "DJI",
+      "model": "Mavic 3E Wide Camera 24mm f/2.8",
+      "focalLength": 24,
+      "maxAperture": 2.8,
+      "minAperture": 11,
+      "compatibleWith": ["Micro Four Thirds", "4/3 CMOS"]
+    },
+    {
+      "id": "109",
+      "brand": "DJI",
+      "model": "Mavic 2 Pro Hasselblad 28mm f/2.8",
+      "focalLength": 28,
+      "maxAperture": 2.8,
+      "minAperture": 11,
+      "compatibleWith": ["1-inch"]
+    },
+    {
+      "id": "110",
+      "brand": "DJI",
+      "model": "Mavic 2 Zoom 24-48mm f/2.8-3.8",
+      "focalLength": 36,
+      "maxAperture": 2.8,
+      "minAperture": 11,
+      "compatibleWith": ["1-inch", "1/2.3-inch"]
+    },
+    {
+      "id": "111",
+      "brand": "DJI",
+      "model": "P1 35mm f/2.8 Fixed Focus",
+      "focalLength": 35,
+      "maxAperture": 2.8,
+      "minAperture": 11,
+      "compatibleWith": ["Full Frame"]
+    },
+    {
+      "id": "112",
+      "brand": "DJI",
+      "model": "P1 50mm f/2.8 Fixed Focus",
+      "focalLength": 50,
+      "maxAperture": 2.8,
+      "minAperture": 11,
+      "compatibleWith": ["Full Frame"]
+    }
+  ],
+  "lenses": [
+    {
+      "id": "1",
+      "brand": "Schneider",
+      "model": "150mm f/5.6 Super-Symmar XL",
+      "focalLength": 150,
+      "maxAperture": 5.6,
+      "minAperture": 64,
+      "compatibleWith": ["Large Format"]
+    },
+    {
+      "id": "2",
+      "brand": "Rodenstock",
+      "model": "210mm f/5.6 Sironar-N",
+      "focalLength": 210,
+      "maxAperture": 5.6,
+      "minAperture": 64,
+      "compatibleWith": ["Large Format"]
+    },
+    {
+      "id": "3",
+      "brand": "Hasselblad",
+      "model": "80mm f/2.8 XCD",
+      "focalLength": 80,
+      "maxAperture": 2.8,
+      "minAperture": 32,
+      "compatibleWith": ["Medium Format"]
+    },
+    {
+      "id": "81",
+      "brand": "Hasselblad",
+      "model": "XCD 38V f/2.5",
+      "focalLength": 38,
+      "maxAperture": 2.5,
+      "minAperture": 32,
+      "compatibleWith": ["Medium Format"]
+    },
+    {
+      "id": "82",
+      "brand": "Hasselblad",
+      "model": "XCD 55V f/2.5",
+      "focalLength": 55,
+      "maxAperture": 2.5,
+      "minAperture": 32,
+      "compatibleWith": ["Medium Format"]
+    },
+    {
+      "id": "83",
+      "brand": "Hasselblad",
+      "model": "XCD 90V f/2.5",
+      "focalLength": 90,
+      "maxAperture": 2.5,
+      "minAperture": 32,
+      "compatibleWith": ["Medium Format"]
+    },
+    {
+      "id": "84",
+      "brand": "Hasselblad",
+      "model": "XCD 35-75mm f/3.5-4.5",
+      "focalLength": 55,
+      "maxAperture": 3.5,
+      "minAperture": 32,
+      "compatibleWith": ["Medium Format"]
+    },
+    {
+      "id": "85",
+      "brand": "Hasselblad",
+      "model": "XCD 21mm f/4",
+      "focalLength": 21,
+      "maxAperture": 4,
+      "minAperture": 32,
+      "compatibleWith": ["Medium Format"]
+    },
+    {
+      "id": "86",
+      "brand": "Hasselblad",
+      "model": "XCD 23mm f/4",
+      "focalLength": 23,
+      "maxAperture": 4,
+      "minAperture": 32,
+      "compatibleWith": ["Medium Format"]
+    },
+    {
+      "id": "87",
+      "brand": "Hasselblad",
+      "model": "XCD 30mm f/3.5",
+      "focalLength": 30,
+      "maxAperture": 3.5,
+      "minAperture": 32,
+      "compatibleWith": ["Medium Format"]
+    },
+    {
+      "id": "88",
+      "brand": "Hasselblad",
+      "model": "XCD 35mm f/3.5",
+      "focalLength": 35,
+      "maxAperture": 3.5,
+      "minAperture": 32,
+      "compatibleWith": ["Medium Format"]
+    },
+    {
+      "id": "89",
+      "brand": "Hasselblad",
+      "model": "XCD 45mm f/3.5",
+      "focalLength": 45,
+      "maxAperture": 3.5,
+      "minAperture": 32,
+      "compatibleWith": ["Medium Format"]
+    },
+    {
+      "id": "90",
+      "brand": "Hasselblad",
+      "model": "XCD 45mm f/4 P",
+      "focalLength": 45,
+      "maxAperture": 4,
+      "minAperture": 32,
+      "compatibleWith": ["Medium Format"]
+    },
+    {
+      "id": "91",
+      "brand": "Hasselblad",
+      "model": "XCD 65mm f/2.8",
+      "focalLength": 65,
+      "maxAperture": 2.8,
+      "minAperture": 32,
+      "compatibleWith": ["Medium Format"]
+    },
+    {
+      "id": "92",
+      "brand": "Hasselblad",
+      "model": "XCD 80mm f/1.9",
+      "focalLength": 80,
+      "maxAperture": 1.9,
+      "minAperture": 32,
+      "compatibleWith": ["Medium Format"]
+    },
+    {
+      "id": "93",
+      "brand": "Hasselblad",
+      "model": "XCD 90mm f/3.2",
+      "focalLength": 90,
+      "maxAperture": 3.2,
+      "minAperture": 32,
+      "compatibleWith": ["Medium Format"]
+    },
+    {
+      "id": "94",
+      "brand": "Hasselblad",
+      "model": "XCD 135mm f/2.8",
+      "focalLength": 135,
+      "maxAperture": 2.8,
+      "minAperture": 32,
+      "compatibleWith": ["Medium Format"]
+    },
+    {
+      "id": "95",
+      "brand": "Hasselblad",
+      "model": "XCD 140-280mm f/4.0-5.6",
+      "focalLength": 210,
+      "maxAperture": 4.8,
+      "minAperture": 32,
+      "compatibleWith": ["Medium Format"]
+    },
+    {
+      "id": "80",
+      "brand": "Phase One",
+      "model": "RSM 50mm f/2.8",
+      "focalLength": 50,
+      "maxAperture": 2.8,
+      "minAperture": 22,
+      "compatibleWith": ["Medium Format"]
+    },
+    {
+      "id": "96",
+      "brand": "Fujifilm",
+      "model": "GF 100-200mm f/5.6 R LM OIS WR",
+      "focalLength": 150,
+      "maxAperture": 5.6,
+      "minAperture": 32,
+      "compatibleWith": ["Medium Format"]
+    },
+    {
+      "id": "4",
+      "brand": "Phase One",
+      "model": "80mm f/2.8 LS Blue Ring",
+      "focalLength": 80,
+      "maxAperture": 2.8,
+      "minAperture": 22,
+      "compatibleWith": ["Medium Format"]
+    },
+    {
+      "id": "5",
+      "brand": "Fujifilm",
+      "model": "GF 23mm f/4 R LM WR",
+      "focalLength": 23,
+      "maxAperture": 4,
+      "minAperture": 32,
+      "compatibleWith": ["Medium Format"]
+    },
+    {
+      "id": "6",
+      "brand": "Fujifilm",
+      "model": "GF 30mm f/3.5 R WR",
+      "focalLength": 30,
+      "maxAperture": 3.5,
+      "minAperture": 32,
+      "compatibleWith": ["Medium Format"]
+    },
+    {
+      "id": "7",
+      "brand": "Fujifilm",
+      "model": "GF 45mm f/2.8 R WR",
+      "focalLength": 45,
+      "maxAperture": 2.8,
+      "minAperture": 32,
+      "compatibleWith": ["Medium Format"]
+    },
+    {
+      "id": "76",
+      "brand": "Fujifilm",
+      "model": "GF 50mm f/3.5 R LM WR",
+      "focalLength": 50,
+      "maxAperture": 3.5,
+      "minAperture": 32,
+      "compatibleWith": ["Medium Format"]
+    },
+    {
+      "id": "77",
+      "brand": "Fujifilm",
+      "model": "GF 55mm f/1.7 R WR",
+      "focalLength": 55,
+      "maxAperture": 1.7,
+      "minAperture": 22,
+      "compatibleWith": ["Medium Format"]
+    },
+    {
+      "id": "8",
+      "brand": "Fujifilm",
+      "model": "GF 63mm f/2.8 R WR",
+      "focalLength": 63,
+      "maxAperture": 2.8,
+      "minAperture": 32,
+      "compatibleWith": ["Medium Format"]
+    },
+    {
+      "id": "9",
+      "brand": "Fujifilm",
+      "model": "GF 80mm f/1.7 R WR",
+      "focalLength": 80,
+      "maxAperture": 1.7,
+      "minAperture": 22,
+      "compatibleWith": ["Medium Format"]
+    },
+    {
+      "id": "10",
+      "brand": "Fujifilm",
+      "model": "GF 110mm f/2 R LM WR",
+      "focalLength": 110,
+      "maxAperture": 2,
+      "minAperture": 22,
+      "compatibleWith": ["Medium Format"]
+    },
+    {
+      "id": "11",
+      "brand": "Fujifilm",
+      "model": "GF 120mm f/4 Macro R LM OIS WR",
+      "focalLength": 120,
+      "maxAperture": 4,
+      "minAperture": 32,
+      "compatibleWith": ["Medium Format"]
+    },
+    {
+      "id": "12",
+      "brand": "Fujifilm",
+      "model": "GF 250mm f/4 R LM OIS WR",
+      "focalLength": 250,
+      "maxAperture": 4,
+      "minAperture": 32,
+      "compatibleWith": ["Medium Format"]
+    },
+    {
+      "id": "78",
+      "brand": "Fujifilm",
+      "model": "GF 32-64mm f/4 R LM WR",
+      "focalLength": 48,
+      "maxAperture": 4,
+      "minAperture": 32,
+      "compatibleWith": ["Medium Format"]
+    },
+    {
+      "id": "79",
+      "brand": "Fujifilm",
+      "model": "GF 45-100mm f/4 R LM OIS WR",
+      "focalLength": 72.5,
+      "maxAperture": 4,
+      "minAperture": 32,
+      "compatibleWith": ["Medium Format"]
+    },
+    {
+      "id": "13",
+      "brand": "Canon",
+      "model": "RF 16mm f/2.8 STM",
+      "focalLength": 16,
+      "maxAperture": 2.8,
+      "minAperture": 22,
+      "compatibleWith": ["Full Frame", "APS-C"]
+    },
+    {
+      "id": "14",
+      "brand": "Canon",
+      "model": "RF 24mm f/1.8 MACRO IS STM",
+      "focalLength": 24,
+      "maxAperture": 1.8,
+      "minAperture": 22,
+      "compatibleWith": ["Full Frame", "APS-C"]
+    },
+    {
+      "id": "15",
+      "brand": "Canon",
+      "model": "RF 35mm f/1.8 MACRO IS STM",
+      "focalLength": 35,
+      "maxAperture": 1.8,
+      "minAperture": 22,
+      "compatibleWith": ["Full Frame", "APS-C"]
+    },
+    {
+      "id": "16",
+      "brand": "Canon",
+      "model": "RF 50mm f/1.2L USM",
+      "focalLength": 50,
+      "maxAperture": 1.2,
+      "minAperture": 16,
+      "compatibleWith": ["Full Frame", "APS-C"]
+    },
+    {
+      "id": "17",
+      "brand": "Canon",
+      "model": "RF 50mm f/1.8 STM",
+      "focalLength": 50,
+      "maxAperture": 1.8,
+      "minAperture": 22,
+      "compatibleWith": ["Full Frame", "APS-C"]
+    },
+    {
+      "id": "18",
+      "brand": "Canon",
+      "model": "RF 85mm f/1.2L USM",
+      "focalLength": 85,
+      "maxAperture": 1.2,
+      "minAperture": 16,
+      "compatibleWith": ["Full Frame", "APS-C"]
+    },
+    {
+      "id": "19",
+      "brand": "Canon",
+      "model": "RF 85mm f/2 MACRO IS STM",
+      "focalLength": 85,
+      "maxAperture": 2,
+      "minAperture": 22,
+      "compatibleWith": ["Full Frame", "APS-C"]
+    },
+    {
+      "id": "20",
+      "brand": "Canon",
+      "model": "RF 100mm f/2.8L MACRO IS USM",
+      "focalLength": 100,
+      "maxAperture": 2.8,
+      "minAperture": 32,
+      "compatibleWith": ["Full Frame", "APS-C"]
+    },
+    {
+      "id": "21",
+      "brand": "Canon",
+      "model": "RF 135mm f/1.8L IS USM",
+      "focalLength": 135,
+      "maxAperture": 1.8,
+      "minAperture": 22,
+      "compatibleWith": ["Full Frame", "APS-C"]
+    },
+    {
+      "id": "22",
+      "brand": "Canon",
+      "model": "RF 400mm f/2.8L IS USM",
+      "focalLength": 400,
+      "maxAperture": 2.8,
+      "minAperture": 22,
+      "compatibleWith": ["Full Frame", "APS-C"]
+    },
+    {
+      "id": "23",
+      "brand": "Canon",
+      "model": "RF 600mm f/4L IS USM",
+      "focalLength": 600,
+      "maxAperture": 4,
+      "minAperture": 32,
+      "compatibleWith": ["Full Frame", "APS-C"]
+    },
+    {
+      "id": "24",
+      "brand": "Canon",
+      "model": "RF 800mm f/5.6L IS USM",
+      "focalLength": 800,
+      "maxAperture": 5.6,
+      "minAperture": 32,
+      "compatibleWith": ["Full Frame", "APS-C"]
+    },
+    {
+      "id": "25",
+      "brand": "Canon",
+      "model": "RF-S 16mm F2.8 STM",
+      "focalLength": 16,
+      "maxAperture": 2.8,
+      "minAperture": 22,
+      "compatibleWith": ["APS-C"]
+    },
+    {
+      "id": "26",
+      "brand": "Canon",
+      "model": "RF-S 22mm F2 STM",
+      "focalLength": 22,
+      "maxAperture": 2,
+      "minAperture": 22,
+      "compatibleWith": ["APS-C"]
+    },
+    {
+      "id": "27",
+      "brand": "Canon",
+      "model": "RF-S 32mm F1.4 STM",
+      "focalLength": 32,
+      "maxAperture": 1.4,
+      "minAperture": 16,
+      "compatibleWith": ["APS-C"]
+    },
+    {
+      "id": "28",
+      "brand": "Sony",
+      "model": "FE 20mm f/1.8 G",
+      "focalLength": 20,
+      "maxAperture": 1.8,
+      "minAperture": 22,
+      "compatibleWith": ["Full Frame", "APS-C"]
+    },
+    {
+      "id": "29",
+      "brand": "Sony",
+      "model": "FE 24mm f/1.4 GM",
+      "focalLength": 24,
+      "maxAperture": 1.4,
+      "minAperture": 16,
+      "compatibleWith": ["Full Frame", "APS-C"]
+    },
+    {
+      "id": "30",
+      "brand": "Sony",
+      "model": "FE 35mm f/1.4 GM",
+      "focalLength": 35,
+      "maxAperture": 1.4,
+      "minAperture": 16,
+      "compatibleWith": ["Full Frame", "APS-C"]
+    },
+    {
+      "id": "31",
+      "brand": "Sony",
+      "model": "FE 50mm f/1.2 GM",
+      "focalLength": 50,
+      "maxAperture": 1.2,
+      "minAperture": 16,
+      "compatibleWith": ["Full Frame", "APS-C"]
+    },
+    {
+      "id": "32",
+      "brand": "Sony",
+      "model": "FE 50mm f/1.4 GM",
+      "focalLength": 50,
+      "maxAperture": 1.4,
+      "minAperture": 16,
+      "compatibleWith": ["Full Frame", "APS-C"]
+    },
+    {
+      "id": "33",
+      "brand": "Sony",
+      "model": "FE 50mm f/1.8",
+      "focalLength": 50,
+      "maxAperture": 1.8,
+      "minAperture": 22,
+      "compatibleWith": ["Full Frame", "APS-C"]
+    },
+    {
+      "id": "34",
+      "brand": "Sony",
+      "model": "FE 85mm f/1.4 GM",
+      "focalLength": 85,
+      "maxAperture": 1.4,
+      "minAperture": 16,
+      "compatibleWith": ["Full Frame", "APS-C"]
+    },
+    {
+      "id": "35",
+      "brand": "Sony",
+      "model": "FE 85mm f/1.8",
+      "focalLength": 85,
+      "maxAperture": 1.8,
+      "minAperture": 22,
+      "compatibleWith": ["Full Frame", "APS-C"]
+    },
+    {
+      "id": "36",
+      "brand": "Sony",
+      "model": "FE 100mm f/2.8 STF GM OSS",
+      "focalLength": 100,
+      "maxAperture": 2.8,
+      "minAperture": 20,
+      "compatibleWith": ["Full Frame", "APS-C"]
+    },
+    {
+      "id": "37",
+      "brand": "Sony",
+      "model": "FE 135mm f/1.8 GM",
+      "focalLength": 135,
+      "maxAperture": 1.8,
+      "minAperture": 22,
+      "compatibleWith": ["Full Frame", "APS-C"]
+    },
+    {
+      "id": "38",
+      "brand": "Sony",
+      "model": "FE 400mm f/2.8 GM OSS",
+      "focalLength": 400,
+      "maxAperture": 2.8,
+      "minAperture": 22,
+      "compatibleWith": ["Full Frame", "APS-C"]
+    },
+    {
+      "id": "39",
+      "brand": "Sony",
+      "model": "FE 600mm f/4 GM OSS",
+      "focalLength": 600,
+      "maxAperture": 4,
+      "minAperture": 22,
+      "compatibleWith": ["Full Frame", "APS-C"]
+    },
+    {
+      "id": "40",
+      "brand": "Sony",
+      "model": "E 16mm f/2.8",
+      "focalLength": 16,
+      "maxAperture": 2.8,
+      "minAperture": 22,
+      "compatibleWith": ["APS-C"]
+    },
+    {
+      "id": "41",
+      "brand": "Sony",
+      "model": "E a0mm f/2.8",
+      "focalLength": 20,
+      "maxAperture": 2.8,
+      "minAperture": 16,
+      "compatibleWith": ["APS-C"]
+    },
+    {
+      "id": "42",
+      "brand": "Sony",
+      "model": "E 24mm f/1.8 ZA",
+      "focalLength": 24,
+      "maxAperture": 1.8,
+      "minAperture": 22,
+      "compatibleWith": ["APS-C"]
+    },
+    {
+      "id": "43",
+      "brand": "Sony",
+      "model": "E 30mm f/3.5 Macro",
+      "focalLength": 30,
+      "maxAperture": 3.5,
+      "minAperture": 22,
+      "compatibleWith": ["APS-C"]
+    },
+    {
+      "id": "44",
+      "brand": "Sony",
+      "model": "E 35mm f/1.8 OSS",
+      "focalLength": 35,
+      "maxAperture": 1.8,
+      "minAperture": 22,
+      "compatibleWith": ["APS-C"]
+    },
+    {
+      "id": "45",
+      "brand": "Sony",
+      "model": "E 50mm f/1.8 OSS",
+      "focalLength": 50,
+      "maxAperture": 1.8,
+      "minAperture": 22,
+      "compatibleWith": ["APS-C"]
+    },
+    {
+      "id": "46",
+      "brand": "Fujifilm",
+      "model": "XF 16mm f/1.4 R WR",
+      "focalLength": 16,
+      "maxAperture": 1.4,
+      "minAperture": 16,
+      "compatibleWith": ["APS-C"]
+    },
+    {
+      "id": "47",
+      "brand": "Fujifilm",
+      "model": "XF 23mm f/1.4 R LM WR",
+      "focalLength": 23,
+      "maxAperture": 1.4,
+      "minAperture": 16,
+      "compatibleWith": ["APS-C"]
+    },
+    {
+      "id": "48",
+      "brand": "Fujifilm",
+      "model": "XF 33mm f/1.4 R LM WR",
+      "focalLength": 33,
+      "maxAperture": 1.4,
+      "minAperture": 16,
+      "compatibleWith": ["APS-C"]
+    },
+    {
+      "id": "49",
+      "brand": "Fujifilm",
+      "model": "XF 35mm f/1.4 R",
+      "focalLength": 35,
+      "maxAperture": 1.4,
+      "minAperture": 16,
+      "compatibleWith": ["APS-C"]
+    },
+    {
+      "id": "50",
+      "brand": "Fujifilm",
+      "model": "XF 50mm f/1.0 R WR",
+      "focalLength": 50,
+      "maxAperture": 1,
+      "minAperture": 16,
+      "compatibleWith": ["APS-C"]
+    },
+    {
+      "id": "51",
+      "brand": "Fujifilm",
+      "model": "XF 56mm f/1.2 R",
+      "focalLength": 56,
+      "maxAperture": 1.2,
+      "minAperture": 16,
+      "compatibleWith": ["APS-C"]
+    },
+    {
+      "id": "52",
+      "brand": "Fujifilm",
+      "model": "XF 80mm f/2.8 R LM OIS WR Macro",
+      "focalLength": 80,
+      "maxAperture": 2.8,
+      "minAperture": 22,
+      "compatibleWith": ["APS-C"]
+    },
+    {
+      "id": "53",
+      "brand": "Fujifilm",
+      "model": "XF 90mm f/2 R LM WR",
+      "focalLength": 90,
+      "maxAperture": 2,
+      "minAperture": 16,
+      "compatibleWith": ["APS-C"]
+    },
+    {
+      "id": "54",
+      "brand": "Fujifilm",
+      "model": "XF 200mm f/2 R LM OIS WR",
+      "focalLength": 200,
+      "maxAperture": 2,
+      "minAperture": 22,
+      "compatibleWith": ["APS-C"]
+    },
+    {
+      "id": "55",
+      "brand": "Nikon",
+      "model": "50mm f/1.8G",
+      "focalLength": 50,
+      "maxAperture": 1.8,
+      "minAperture": 16,
+      "compatibleWith": ["Full Frame", "APS-C"]
+    },
+    {
+      "id": "56",
+      "brand": "Nikon",
+      "model": "85mm f/1.8G",
+      "focalLength": 85,
+      "maxAperture": 1.8,
+      "minAperture": 16,
+      "compatibleWith": ["Full Frame", "APS-C"]
+    },
+    {
+      "id": "57",
+      "brand": "Nikon",
+      "model": "35mm f/1.8G ED",
+      "focalLength": 35,
+      "maxAperture": 1.8,
+      "minAperture": 16,
+      "compatibleWith": ["Full Frame", "APS-C"]
+    },
+    {
+      "id": "58",
+      "brand": "Panasonic",
+      "model": "25mm f/1.7 ASPH",
+      "focalLength": 25,
+      "maxAperture": 1.7,
+      "minAperture": 22,
+      "compatibleWith": ["Micro Four Thirds"]
+    },
+    {
+      "id": "59",
+      "brand": "Olympus",
+      "model": "45mm f/1.8",
+      "focalLength": 45,
+      "maxAperture": 1.8,
+      "minAperture": 22,
+      "compatibleWith": ["Micro Four Thirds"]
+    },
+    {
+      "id": "60",
+      "brand": "Olympus",
+      "model": "17mm f/1.8",
+      "focalLength": 17,
+      "maxAperture": 1.8,
+      "minAperture": 22,
+      "compatibleWith": ["Micro Four Thirds"]
+    },
+    {
+      "id": "61",
+      "brand": "Canon",
+      "model": "EF 24mm f/1.4L II USM",
+      "focalLength": 24,
+      "maxAperture": 1.4,
+      "minAperture": 22,
+      "compatibleWith": ["Full Frame", "APS-C"]
+    },
+    {
+      "id": "62",
+      "brand": "Canon",
+      "model": "EF 35mm f/1.4L II USM",
+      "focalLength": 35,
+      "maxAperture": 1.4,
+      "minAperture": 22,
+      "compatibleWith": ["Full Frame", "APS-C"]
+    },
+    {
+      "id": "63",
+      "brand": "Canon",
+      "model": "EF 50mm f/1.2L USM",
+      "focalLength": 50,
+      "maxAperture": 1.2,
+      "minAperture": 16,
+      "compatibleWith": ["Full Frame", "APS-C"]
+    },
+    {
+      "id": "64",
+      "brand": "Canon",
+      "model": "EF 50mm f/1.4 USM",
+      "focalLength": 50,
+      "maxAperture": 1.4,
+      "minAperture": 22,
+      "compatibleWith": ["Full Frame", "APS-C"]
+    },
+    {
+      "id": "65",
+      "brand": "Canon",
+      "model": "EF 85mm f/1.2L II USM",
+      "focalLength": 85,
+      "maxAperture": 1.2,
+      "minAperture": 16,
+      "compatibleWith": ["Full Frame", "APS-C"]
+    },
+    {
+      "id": "66",
+      "brand": "Canon",
+      "model": "EF 85mm f/1.4L IS USM",
+      "focalLength": 85,
+      "maxAperture": 1.4,
+      "minAperture": 22,
+      "compatibleWith": ["Full Frame", "APS-C"]
+    },
+    {
+      "id": "67",
+      "brand": "Canon",
+      "model": "EF 135mm f/2L USM",
+      "focalLength": 135,
+      "maxAperture": 2,
+      "minAperture": 32,
+      "compatibleWith": ["Full Frame", "APS-C"]
+    },
+    {
+      "id": "68",
+      "brand": "Canon",
+      "model": "EF 24-70mm f/2.8L II USM",
+      "focalLength": 50,
+      "maxAperture": 2.8,
+      "minAperture": 22,
+      "compatibleWith": ["Full Frame", "APS-C"]
+    },
+    {
+      "id": "69",
+      "brand": "Canon",
+      "model": "EF 70-200mm f/2.8L IS III USM",
+      "focalLength": 135,
+      "maxAperture": 2.8,
+      "minAperture": 32,
+      "compatibleWith": ["Full Frame", "APS-C"]
+    },
+    {
+      "id": "70",
+      "brand": "Canon",
+      "model": "EF 16-35mm f/2.8L III USM",
+      "focalLength": 24,
+      "maxAperture": 2.8,
+      "minAperture": 22,
+      "compatibleWith": ["Full Frame", "APS-C"]
+    },
+    {
+      "id": "71",
+      "brand": "DZOFilm",
+      "model": "Arles 25mm T1.5 FF/VV",
+      "focalLength": 25,
+      "maxAperture": 1.5,
+      "minAperture": 22,
+      "compatibleWith": ["Large Format", "Full Frame", "APS-C"]
+    },
+    {
+      "id": "72",
+      "brand": "DZOFilm",
+      "model": "Arles 35mm T1.5 FF/VV",
+      "focalLength": 35,
+      "maxAperture": 1.5,
+      "minAperture": 22,
+      "compatibleWith": ["Large Format", "Full Frame", "APS-C"]
+    },
+    {
+      "id": "73",
+      "brand": "DZOFilm",
+      "model": "Arles 50mm T1.5 FF/VV",
+      "focalLength": 50,
+      "maxAperture": 1.5,
+      "minAperture": 22,
+      "compatibleWith": ["Large Format", "Full Frame", "APS-C"]
+    },
+    {
+      "id": "74",
+      "brand": "DZOFilm",
+      "model": "Arles 75mm T1.5 FF/VV",
+      "focalLength": 75,
+      "maxAperture": 1.5,
+      "minAperture": 22,
+      "compatibleWith": ["Large Format", "Full Frame", "APS-C"]
+    },
+    {
+      "id": "75",
+      "brand": "DZOFilm",
+      "model": "Arles 100mm T1.5 FF/VV",
+      "focalLength": 100,
+      "maxAperture": 1.5,
+      "minAperture": 22,
+      "compatibleWith": ["Large Format", "Full Frame", "APS-C"]
+    },
+    {
+      "id": "76",
+      "brand": "Phase One",
+      "model": "RSM 35mm f/5.6",
+      "focalLength": 35,
+      "maxAperture": 5.6,
+      "minAperture": 22,
+      "compatibleWith": ["Medium Format"]
+    },
+    {
+      "id": "77",
+      "brand": "Phase One",
+      "model": "RSM 80mm f/2.8",
+      "focalLength": 80,
+      "maxAperture": 2.8,
+      "minAperture": 22,
+      "compatibleWith": ["Medium Format"]
+    },
+    {
+      "id": "78",
+      "brand": "Phase One",
+      "model": "RSM 150mm f/3.5",
+      "focalLength": 150,
+      "maxAperture": 3.5,
+      "minAperture": 22,
+      "compatibleWith": ["Medium Format"]
+    },
+    {
+      "id": "79",
+      "brand": "Phase One",
+      "model": "RSM 90mm f/3.5",
+      "focalLength": 90,
+      "maxAperture": 3.5,
+      "minAperture": 22,
+      "compatibleWith": ["Medium Format"]
+    }
+  ],
+  "apertures": [1, 1.2, 1.4, 1.5, 1.7, 1.8, 1.9, 2, 2.5, 2.8, 3.2, 3.5, 4, 4.5, 4.8, 5.6, 8, 11, 16, 22, 32, 45, 64]
+} 
