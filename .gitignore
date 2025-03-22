@@ -44,4 +44,26 @@ dist-ssr
 
 # JFrog related
 .jfrog/
-jfrog.cli.conf 
+jfrog.cli.conf
+
+# Large files
+dof-calculator/public/models/*.stp
+dof-calculator/public/models/*.obj
+temp-potree.zip
+
+# Large directories
+public/potree/
+public/potree-data/
+
+# Build directories
+dist/
+build/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE directories
+.idea/
+.vscode/
+*.sublime-* 

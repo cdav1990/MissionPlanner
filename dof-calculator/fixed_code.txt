@@ -1,0 +1,8 @@
+          className={`tab-button ${activeTab === \"rotation\" ? \"active\" : \"\"}`} 
+          onClick={() => setActiveTab(\"rotation\")}
+        >
+          Rotation
+        </button>
+      </div>
+
+      {activeTab === \"position\" && (

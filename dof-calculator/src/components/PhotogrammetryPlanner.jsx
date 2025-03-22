@@ -6,7 +6,8 @@ const PhotogrammetryPlanner = ({
   cameraDetails,
   lensDetails,
   aperture,
-  focusDistance
+  focusDistance,
+  compactLayout = false // New prop with default value
 }) => {
   // State for inputs
   const [surfaceWidth, setSurfaceWidth] = useState(10);
@@ -127,58 +128,34 @@ const PhotogrammetryPlanner = ({
     return gsdMM;
   };
   
-  // Update the storage calculation function
+  // Calculate estimated storage requirements
   const calculateEstimatedStorage = () => {
-    if (!cameraDetails?.megapixels) return { jpeg: 'N/A', raw: 'N/A' };
+    if (!cameraDetails) return { raw: 0, jpeg: 0 };
     
-    // More accurate file size calculation for different camera types
-    let jpegSizePerMp;
-    let rawSizePerMp;
+    // Average RAW file size calculation (megapixels * 2 for 14-bit RAW, roughly)
+    const rawSizePerImage = cameraDetails.megapixels * 2;
     
-    // Adjust file size estimation based on camera brand/type
-    if (cameraDetails.brand === 'Phase One' || cameraDetails.brand === 'Hasselblad') {
-      // Phase One and Hasselblad produce large files
-      jpegSizePerMp = 0.8; // MB per megapixel for JPEG
-      rawSizePerMp = 5.0; // MB per megapixel for RAW
-    } else if (cameraDetails.brand === 'Fujifilm' && cameraDetails.model.includes('GFX')) {
-      // Fujifilm medium format
-      jpegSizePerMp = 0.8; // MB per megapixel for JPEG
-      rawSizePerMp = 4.5; // MB per megapixel for RAW
-    } else if (cameraDetails.megapixels > 45) {
-      // Other high-resolution cameras
-      jpegSizePerMp = 0.7; // MB per megapixel for JPEG
-      rawSizePerMp = 4.0; // MB per megapixel for RAW
-    } else {
-      // Standard full-frame or smaller sensors
-      jpegSizePerMp = 0.5; // MB per megapixel for JPEG
-      rawSizePerMp = 2.5; // MB per megapixel for RAW
-    }
+    // Average JPEG size (megapixels * 0.3 for high quality JPEG, roughly)
+    const jpegSizePerImage = cameraDetails.megapixels * 0.3;
     
-    const totalJpegSizeMB = numImagesRequired * (cameraDetails.megapixels * jpegSizePerMp);
-    const totalRawSizeMB = numImagesRequired * (cameraDetails.megapixels * rawSizePerMp);
+    // Total storage required in MB
+    const rawTotal = rawSizePerImage * numImagesRequired;
+    const jpegTotal = jpegSizePerImage * numImagesRequired;
     
-    // Format output for display
-    let jpegSizeDisplay;
-    let rawSizeDisplay;
-    
-    if (totalJpegSizeMB > 1024) {
-      jpegSizeDisplay = `${(totalJpegSizeMB / 1024).toFixed(1)} GB`;
-    } else {
-      jpegSizeDisplay = `${totalJpegSizeMB.toFixed(0)} MB`;
-    }
-    
-    if (totalRawSizeMB > 1024) {
-      rawSizeDisplay = `${(totalRawSizeMB / 1024).toFixed(1)} GB`;
-    } else {
-      rawSizeDisplay = `${totalRawSizeMB.toFixed(0)} MB`;
-    }
-    
-    return { 
-      jpeg: jpegSizeDisplay, 
-      raw: rawSizeDisplay,
-      totalJpegSizeMB,
-      totalRawSizeMB
+    // Format based on size
+    return {
+      raw: formatStorage(rawTotal),
+      jpeg: formatStorage(jpegTotal)
     };
+  };
+  
+  // Format storage values (MB, GB, etc.)
+  const formatStorage = (sizeInMB) => {
+    if (sizeInMB < 1000) {
+      return `${sizeInMB.toFixed(0)} MB`;
+    } else {
+      return `${(sizeInMB / 1000).toFixed(1)} GB`;
+    }
   };
   
   // Update calculations when inputs change
@@ -201,6 +178,150 @@ const PhotogrammetryPlanner = ({
   const pixelDensity = calculatePixelDensity();
   const estimatedStorage = calculateEstimatedStorage();
   
+  // Render a simpler version of the planner when in compact mode
+  if (compactLayout) {
+    return (
+      <div className="photogrammetry-planner">
+        <h3>Photogrammetry Capture Planner</h3>
+        
+        <div className="planner-inputs">
+          <div className="input-section">
+            <h4>Subject Dimensions</h4>
+            <div className="input-group">
+              <label htmlFor="surface-width">Width:</label>
+              <div className="range-value">
+                <input
+                  type="number"
+                  id="surface-width"
+                  min="0.1"
+                  max="1000"
+                  step="0.1"
+                  value={surfaceWidth}
+                  onChange={(e) => setSurfaceWidth(parseFloat(e.target.value) || 0)}
+                />
+                <span>{distanceUnit}</span>
+              </div>
+            </div>
+            
+            <div className="input-group">
+              <label htmlFor="surface-height">Height:</label>
+              <div className="range-value">
+                <input
+                  type="number"
+                  id="surface-height"
+                  min="0.1"
+                  max="1000"
+                  step="0.1"
+                  value={surfaceHeight}
+                  onChange={(e) => setSurfaceHeight(parseFloat(e.target.value) || 0)}
+                />
+                <span>{distanceUnit}</span>
+              </div>
+            </div>
+            
+            <div className="input-group">
+              <label htmlFor="surface-depth">Depth (optional):</label>
+              <div className="range-value">
+                <input
+                  type="number"
+                  id="surface-depth"
+                  min="0"
+                  max="1000"
+                  step="0.1"
+                  value={surfaceDepth}
+                  onChange={(e) => setSurfaceDepth(parseFloat(e.target.value) || 0)}
+                />
+                <span>{distanceUnit}</span>
+              </div>
+              <small className="form-tip">Leave at 0 for flat surfaces</small>
+            </div>
+          </div>
+          
+          <div className="input-section">
+            <h4>Overlap Settings</h4>
+            <div className="input-group">
+              <label htmlFor="horizontal-overlap">Horizontal Overlap:</label>
+              <div className="range-value">
+                <input
+                  type="number"
+                  id="horizontal-overlap"
+                  min="1"
+                  max="90"
+                  step="1"
+                  value={horizontalOverlap}
+                  onChange={(e) => setHorizontalOverlap(parseInt(e.target.value) || 0)}
+                />
+                <span>%</span>
+              </div>
+              <input
+                type="range"
+                min="1"
+                max="90"
+                step="1"
+                value={horizontalOverlap}
+                onChange={(e) => setHorizontalOverlap(parseInt(e.target.value))}
+              />
+            </div>
+            
+            <div className="input-group">
+              <label htmlFor="vertical-overlap">Vertical Overlap:</label>
+              <div className="range-value">
+                <input
+                  type="number"
+                  id="vertical-overlap"
+                  min="1"
+                  max="90"
+                  step="1"
+                  value={verticalOverlap}
+                  onChange={(e) => setVerticalOverlap(parseInt(e.target.value) || 0)}
+                />
+                <span>%</span>
+              </div>
+              <input
+                type="range"
+                min="1"
+                max="90"
+                step="1"
+                value={verticalOverlap}
+                onChange={(e) => setVerticalOverlap(parseInt(e.target.value))}
+              />
+            </div>
+          </div>
+        </div>
+        
+        <div className="planner-results">
+          <div className="result-card">
+            <h4>Total Surface Area</h4>
+            <p>{totalSurfaceArea.toFixed(1)} {distanceUnit === 'm' ? 'm²' : 'ft²'}</p>
+            {surfaceDepth > 0 && <small>Box-shaped object with 6 sides</small>}
+          </div>
+          
+          <div className="result-card">
+            <h4>Unique Area per Image</h4>
+            <p>{effectiveCoverage.width.toFixed(1)} × {effectiveCoverage.height.toFixed(1)} {distanceUnit}</p>
+            <small>With {horizontalOverlap}% horizontal and {verticalOverlap}% vertical overlap</small>
+          </div>
+          
+          <div className="result-card highlight">
+            <h4>Images Required</h4>
+            <p className="large-number">{numImagesRequired}</p>
+            <small>Based on current overlap settings</small>
+          </div>
+        </div>
+        
+        <div className="planner-tips">
+          <h4>Photogrammetry Tips</h4>
+          <ul className="tips-list">
+            <li>60-80% overlap is typically recommended for optimal results</li>
+            <li>For 3D objects, capture images at multiple heights</li>
+            <li>Consider using aperture f/{recommendedAperture || 8}-f/11 for depth of field</li>
+          </ul>
+        </div>
+      </div>
+    );
+  }
+  
+  // Regular (full) version of the planner for the standalone tab
   return (
     <div className="photogrammetry-planner">
       <h3>Photogrammetry Capture Planner</h3>

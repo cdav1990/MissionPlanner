@@ -1,0 +1,40 @@
+{
+  "name": "dof-calculator",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "start": "vite",
+    "download-samples": "node scripts/download-samples.js",
+    "setup-potree": "node scripts/setup-potree.js",
+    "build": "vite build",
+    "serve": "vite preview",
+    "setup-all": "npm run download-samples && npm run setup-potree"
+  },
+  "dependencies": {
+    "@deck.gl/core": "^9.1.6",
+    "@deck.gl/layers": "^9.1.6",
+    "@deck.gl/mesh-layers": "^9.1.6",
+    "@deck.gl/react": "^9.1.6",
+    "@loaders.gl/3d-tiles": "^4.3.3",
+    "@loaders.gl/core": "^4.3.3",
+    "@loaders.gl/csv": "^4.3.3",
+    "@loaders.gl/las": "^4.3.3",
+    "@loaders.gl/ply": "^4.3.3",
+    "@react-three/drei": "^9.56.25",
+    "@react-three/fiber": "^8.11.5",
+    "axios": "^1.4.0",
+    "cesium": "^1.127.0",
+    "deck.gl": "^9.1.6",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-slider": "^2.0.6",
+    "styled-components": "^5.3.6",
+    "three": "^0.150.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^3.1.0",
+    "adm-zip": "^0.5.16",
+    "fs-extra": "^11.3.0",
+    "vite": "^4.5.0"
+  }
+}

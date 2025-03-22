@@ -16,7 +16,7 @@ const feetToMeters = (feet) => feet / 3.28084;
 // Threshold to display infinity symbol (when distance is larger than this multiple of focus distance)
 const INFINITY_DISPLAY_THRESHOLD = 15;
 
-const DOFCalculator = () => {
+const DOFCalculator = ({ onUpdate, deviceCapabilities = null, contextLostCount = 0 }) => {
   // State for selected values
   const [selectedSensorSize, setSelectedSensorSize] = useState('');
   const [selectedCamera, setSelectedCamera] = useState('');
@@ -41,6 +41,22 @@ const DOFCalculator = () => {
   const selectedLensDetails = selectedLens 
     ? cameraLensData.lenses.find(lens => lens.id === selectedLens) 
     : null;
+  
+  // Notify parent components when camera, lens, or calculations change
+  useEffect(() => {
+    if (typeof onUpdate === 'function') {
+      onUpdate({
+        cameraDetails: selectedCameraDetails,
+        lensDetails: selectedLensDetails,
+        calculations: dofCalculations,
+        settings: {
+          distanceUnit,
+          aperture: selectedAperture,
+          focusDistance
+        }
+      });
+    }
+  }, [selectedCameraDetails, selectedLensDetails, dofCalculations, distanceUnit, selectedAperture, focusDistance, onUpdate]);
   
   // Update filtered cameras when sensor size selection changes
   useEffect(() => {
@@ -636,14 +652,33 @@ const DOFCalculator = () => {
                     <div className="dof-actions">
                       <button 
                         className="action-button"
-                        onClick={() => setActiveTab('photogrammetry')}
+                        onClick={() => {
+                          // Navigate to the photogrammetry planning tab
+                          setActiveTab('photogrammetry');
+                        }}
                       >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                          <circle cx="12" cy="13" r="4"></circle>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                          <circle cx="12" cy="13" r="4"/>
                         </svg>
                         Plan Photogrammetry with These Settings
                       </button>
+                    </div>
+                    
+                    {/* Add the Photogrammetry Planner directly in the DOF tab */}
+                    <div className="dof-planner-section">
+                      <h2>Photogrammetry Capture Planner</h2>
+                      <div className="overlap-planner">
+                        <PhotogrammetryPlanner 
+                          groundCoverage={getGroundCoverage(dofCalculations.focusDistance, selectedLensDetails?.focalLength, selectedCameraDetails)}
+                          distanceUnit={distanceUnit}
+                          cameraDetails={selectedCameraDetails}
+                          lensDetails={selectedLensDetails}
+                          aperture={selectedAperture}
+                          focusDistance={dofCalculations.focusDistance}
+                          compactLayout={true}
+                        />
+                      </div>
                     </div>
                   </div>
                 ) : (

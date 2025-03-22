@@ -1,0 +1,27 @@
+ply
+format ascii 1.0
+comment Simple bunny point cloud for testing
+element vertex 16
+property float x
+property float y
+property float z
+property uchar red
+property uchar green
+property uchar blue
+end_header
+0.0 0.0 0.0 200 150 150
+-0.5 0.5 0.0 200 150 150
+0.5 0.5 0.0 200 150 150
+0.0 1.0 0.0 200 150 150
+-1.0 1.5 0.0 200 150 150
+-0.2 1.8 0.0 200 150 150
+0.2 1.8 0.0 200 150 150
+1.0 1.5 0.0 200 150 150
+-0.6 2.0 0.0 255 200 200
+-0.3 2.2 0.0 255 200 200
+0.3 2.2 0.0 255 200 200
+0.6 2.0 0.0 255 200 200
+-0.3 1.0 0.3 200 150 150
+0.3 1.0 0.3 200 150 150
+-0.3 0.5 0.5 200 150 150
+0.3 0.5 0.5 200 150 150

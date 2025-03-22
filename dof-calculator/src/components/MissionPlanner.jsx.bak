@@ -1,0 +1,2074 @@
+import React, { useState, useEffect, Suspense, useRef, useReducer, useMemo, useCallback } from 'react';
+import { Canvas, useThree, extend } from '@react-three/fiber';
+import { OrbitControls, Html, PerspectiveCamera, Line, Text } from '@react-three/drei';
+import * as THREE from 'three';
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader';
+import { PLYLoader } from 'three/examples/jsm/loaders/PLYLoader'; // Add PLYLoader import
+import { PCDLoader } from 'three/examples/jsm/loaders/PCDLoader';
+// Note: THREE.js doesn't have built-in LAS/LAZ support - would need third-party libraries
+import DroneMissionEnhanced from './DroneMissionEnhanced';
+import MissionPlannerIntegration from './MissionPlannerIntegration';
+import ModelLoader from './ModelLoader';
+import DroneSelector from './DroneSelector';
+import SelectableModel from './SelectableModel';
+import SelectionControls from './SelectionControls';
+import PotreePointCloud from './PotreePointCloud';
+import SimplePointCloud from './SimplePointCloud';
+import AdvancedControls from './AdvancedControls'; // Import the AdvancedControls component
+import CanvasErrorBoundary from './CanvasErrorBoundary'; // Import error boundary
+import ModelErrorBoundary from './ModelErrorBoundary'; // Import model error boundary from dedicated file
+import ThreeCanvas from './ThreeCanvas'; // Import ThreeCanvas
+import styled from 'styled-components';
+import { Button } from '@mui/material';
+import { FiChevronDown, FiChevronUp, FiCamera, FiCrosshair, FiMap, FiTarget, FiBox, FiSettings, FiMaximize, FiZoomIn } from 'react-icons/fi';
+
+// Styled components for model controls to match drone control UI
+const ControlGroup = styled.div`
+  margin-bottom: 15px;
+`;
+
+const ControlLabel = styled.label`
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+  color: #ccc;
+`;
+
+const ControlItem = styled.div`
+  display: grid;
+  grid-template-columns: 75px 1fr 60px;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  width: 100%;
+`;
+
+const RangeInput = styled.input`
+  width: 100%;
+  height: 10px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: linear-gradient(to right, #1a5bb7, #4f88e3);
+  border-radius: 5px;
+  outline: none;
+  z-index: 1;
+  
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: white;
+    cursor: pointer;
+    border: 1px solid #4f88e3;
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.4);
+    z-index: 2;
+  }
+  
+  &::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: white;
+    cursor: pointer;
+    border: 1px solid #4f88e3;
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.4);
+    z-index: 2;
+  }
+  
+  &:focus {
+    outline: none;
+  }
+`;
+
+const NumberInput = styled.input`
+  width: 100%;
+  background-color: #3a3a3a;
+  border: 1px solid #4f88e3;
+  border-radius: 4px;
+  color: white;
+  padding: 5px;
+  text-align: center;
+  font-size: 0.9rem;
+  
+  &:focus {
+    outline: none;
+    border-color: #6fa0ff;
+    box-shadow: 0 0 0 2px rgba(79, 136, 227, 0.3);
+  }
+  
+  /* Remove spinner buttons for number inputs */
+  &::-webkit-inner-spin-button,
+  &::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  
+  /* Firefox */
+  -moz-appearance: textfield;
+`;
+
+const HelpText = styled.div`
+  font-size: 11px;
+  margin-top: 2px;
+  color: #aaa;
+`;
+
+const CheckboxLabel = styled.label`
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #ccc;
+  
+  input {
+    margin-right: 8px;
+  }
+`;
+
+const SliderContainer = styled.div`
+  margin-bottom: 15px;
+`;
+
+const SliderLabel = styled.label`
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+  color: #ccc;
+`;
+
+const SliderInput = styled.input`
+  width: 100%;
+  height: 10px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: linear-gradient(to right, #1a5bb7, #4f88e3);
+  border-radius: 5px;
+  outline: none;
+  z-index: 1;
+  
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: white;
+    cursor: pointer;
+    border: 1px solid #4f88e3;
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.4);
+    z-index: 2;
+  }
+  
+  &::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: white;
+    cursor: pointer;
+    border: 1px solid #4f88e3;
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.4);
+    z-index: 2;
+  }
+  
+  &:focus {
+    outline: none;
+  }
+`;
+
+const SliderValue = styled.span`
+  display: block;
+  text-align: right;
+  font-size: 0.9rem;
+  color: #ccc;
+`;
+
+// Add styled buttons for the view controls
+const ViewButton = styled(Button)`
+  width: 100%;
+  margin-bottom: 8px;
+  text-transform: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  border: 1px solid #4f88e3;
+  
+  &.active {
+    background-color: #1a5bb7;
+    box-shadow: 0 0 8px rgba(79, 136, 227, 0.5);
+  }
+  
+  &:hover {
+    background-color: rgba(79, 136, 227, 0.2);
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    border-color: #555;
+  }
+  
+  .icon {
+    margin-right: 8px;
+  }
+  
+  .status {
+    font-size: 0.8rem;
+    opacity: 0.8;
+    margin-left: auto;
+    padding: 2px 6px;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+  }
+`;
+
+// Add styled section header
+const ViewControlsHeader = styled.div`
+  margin: 0;
+  font-size: 1rem;
+  color: #4f88e3;
+  border-bottom: 1px solid #333;
+  padding: 8px 4px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  user-select: none;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    color: #6fa0ff;
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+  
+  &:not(:first-child) {
+    margin-top: 12px;
+  }
+`;
+
+// Add a styled section content container
+const SectionContent = styled.div`
+  margin: 8px 0;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: ${props => props.isExpanded ? '500px' : '0px'};
+  opacity: ${props => props.isExpanded ? '1' : '0'};
+  padding-left: 4px;
+`;
+
+// Add a styled import button
+const ImportButton = styled(Button)`
+  width: 100%;
+  margin-bottom: 12px;
+  text-transform: none;
+  font-weight: 500;
+  padding: 10px 16px;
+  background-color: rgba(26, 91, 183, 0.2);
+  border: 1px solid #4f88e3;
+  border-radius: 6px;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background-color: rgba(79, 136, 227, 0.4);
+    box-shadow: 0 0 8px rgba(79, 136, 227, 0.5);
+  }
+  
+  svg {
+    margin-right: 8px;
+    font-size: 1.2rem;
+  }
+`;
+
+// Add missing styled components
+const MissionPlannerContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #1a1a1a;
+  color: #ccc;
+  overflow: hidden;
+`;
+
+const ControlsPanel = styled.div`
+  padding: 20px;
+  width: 100%;
+  max-width: 320px;
+  background-color: #222;
+  height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+`;
+
+const FileControls = styled.div`
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #333;
+`;
+
+const ViewControls = styled.div`
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #333;
+`;
+
+const CanvasContainer = styled.div`
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background-color: #111;
+`;
+
+// Register THREE with React Three Fiber to avoid namespace issues
+extend({ 
+  ...THREE,
+  OBJLoader,
+  PLYLoader,
+  PCDLoader, // Add PCDLoader for point cloud support
+  // Explicitly register core THREE classes that might be used
+  PerspectiveCamera: THREE.PerspectiveCamera,
+  Scene: THREE.Scene,
+  WebGLRenderer: THREE.WebGLRenderer,
+  Mesh: THREE.Mesh,
+  Group: THREE.Group,
+  BoxGeometry: THREE.BoxGeometry, 
+  SphereGeometry: THREE.SphereGeometry, 
+  PlaneGeometry: THREE.PlaneGeometry, 
+  ConeGeometry: THREE.ConeGeometry,
+  MeshStandardMaterial: THREE.MeshStandardMaterial,
+  MeshBasicMaterial: THREE.MeshBasicMaterial,
+  LineBasicMaterial: THREE.LineBasicMaterial,
+  BufferGeometry: THREE.BufferGeometry,
+  Points: THREE.Points,
+  Line: THREE.Line,
+  LineSegments: THREE.LineSegments
+});
+
+// Instead of trying to modify the THREE namespace directly,
+// create a local reference that's accessible to the component
+const localThree = {
+  M3: THREE.Matrix3
+};
+
+// Add debugging to check THREE namespace
+console.log("THREE namespace in MissionPlanner:", {
+  hasMatrix3: !!THREE.Matrix3,
+  matrix3IsFunction: typeof THREE.Matrix3 === 'function',
+  threeObjectKeys: Object.keys(THREE).filter(key => key.startsWith('M'))
+});
+
+// Camera Frustum component to visualize field of view
+function CameraFrustum({ cameraDetails, lensDetails, position = [0, 0, 0], rotation = [0, 0, 0], scale = 1.0 }) {
+  const frustumRef = useRef(null);
+  
+  // Use useEffect to directly update position and rotation for more reliable updates
+  useEffect(() => {
+    if (frustumRef.current) {
+      frustumRef.current.position.set(position[0], position[1], position[2]);
+    }
+  }, [position]);
+  
+  useEffect(() => {
+    if (frustumRef.current) {
+      frustumRef.current.rotation.set(rotation[0], rotation[1], rotation[2]);
+    }
+  }, [rotation]);
+  
+  if (!cameraDetails || !lensDetails) return null;
+
+  // Calculate FOV based on sensor size and focal length
+  const { sensorWidth, sensorHeight } = cameraDetails;
+  const { focalLength } = lensDetails;
+
+  // Calculate horizontal and vertical FOV in radians
+  const horizontalFOV = 2 * Math.atan(sensorWidth / (2 * focalLength));
+  const verticalFOV = 2 * Math.atan(sensorHeight / (2 * focalLength));
+
+  // Calculate dimensions at near and far planes - adjusted to be visible but not overwhelming
+  const nearPlane = 0.5;
+  const farPlane = 30.0 * scale;   // Apply scale to the far plane distance
+  
+  const nearHeight = 2 * Math.tan(verticalFOV / 2) * nearPlane;
+  const nearWidth = 2 * Math.tan(horizontalFOV / 2) * nearPlane;
+  const farHeight = 2 * Math.tan(verticalFOV / 2) * farPlane;
+  const farWidth = 2 * Math.tan(horizontalFOV / 2) * farPlane;
+
+  // Create points for the frustum
+  const points = [
+    // Near plane - clockwise from bottom-left
+    new THREE.Vector3(-nearWidth/2, -nearHeight/2, -nearPlane),
+    new THREE.Vector3(nearWidth/2, -nearHeight/2, -nearPlane),
+    new THREE.Vector3(nearWidth/2, nearHeight/2, -nearPlane),
+    new THREE.Vector3(-nearWidth/2, nearHeight/2, -nearPlane),
+    // Far plane - clockwise from bottom-left
+    new THREE.Vector3(-farWidth/2, -farHeight/2, -farPlane),
+    new THREE.Vector3(farWidth/2, -farHeight/2, -farPlane),
+    new THREE.Vector3(farWidth/2, farHeight/2, -farPlane),
+    new THREE.Vector3(-farWidth/2, farHeight/2, -farPlane),
+  ];
+
+  // Lines to draw frustum edges
+  const indices = [
+    // Near plane
+    0, 1, 1, 2, 2, 3, 3, 0,
+    // Far plane
+    4, 5, 5, 6, 6, 7, 7, 4,
+    // Connecting near to far
+    0, 4, 1, 5, 2, 6, 3, 7
+  ];
+
+  // Create geometry from points and indices
+  const lineGeometry = new THREE.BufferGeometry();
+  const vertices = [];
+  
+  for (let i = 0; i < indices.length; i++) {
+    vertices.push(points[indices[i]].x, points[indices[i]].y, points[indices[i]].z);
+  }
+
+  lineGeometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+
+  // Create material for the frustum with better visibility
+  const lineMaterial = new THREE.LineBasicMaterial({
+    color: 0x00ffff,
+    linewidth: 2,
+    transparent: true,
+    opacity: 0.6 // Slightly more transparent
+  });
+
+  // Add a semi-transparent fill for the field of view
+  const coneGeometry = new THREE.ConeGeometry(
+    farWidth * 0.7, // radius at the far end
+    farPlane, // height of the cone
+    32 // number of segments
+  );
+  
+  // Adjust the cone to match the frustum
+  coneGeometry.rotateX(Math.PI / 2);
+  coneGeometry.translate(0, 0, -farPlane/2);
+  
+  const coneMaterial = new THREE.MeshBasicMaterial({
+    color: 0x00ffff,
+    transparent: true,
+    opacity: 0.1, // Make more transparent
+    side: THREE.DoubleSide
+  });
+
+  // Return modified group with ref
+  return (
+    <group ref={frustumRef} position={position} rotation={rotation}>
+      <lineSegments geometry={lineGeometry} material={lineMaterial} />
+      <mesh geometry={coneGeometry} material={coneMaterial} />
+      {/* Display FOV values as text */}
+      <Html position={[0, 2, -5 * scale]}>
+        <div style={{
+          background: 'rgba(0,0,0,0.7)',
+          color: 'white',
+          padding: '6px',
+          borderRadius: '4px',
+          fontSize: `${Math.max(12, 12 * Math.sqrt(scale))}px`, // Scale the font size with the frustum scale
+          textAlign: 'center',
+          whiteSpace: 'nowrap',
+          boxShadow: '0 0 5px rgba(0,255,255,0.5)'
+        }}>
+          FOV: {Math.round(horizontalFOV * 180 / Math.PI)}° × {Math.round(verticalFOV * 180 / Math.PI)}°
+          <br />
+          {cameraDetails.brand} {cameraDetails.model}
+          <br />
+          {lensDetails.brand} {lensDetails.model}
+          <br />
+          <span style={{ fontSize: '0.8em', opacity: 0.8 }}>Scale: {scale.toFixed(1)}x</span>
+        </div>
+      </Html>
+    </group>
+  );
+}
+
+// Create a Scene component to handle camera and controls setup
+function SceneSetup({ children }) {
+  // Scene setup
+  const { camera, scene, gl } = useThree();
+  
+  // Log WebGL capabilities to help with debugging
+  useEffect(() => {
+    try {
+      console.log("WebGL context created successfully");
+      console.log("WebGL info:", {
+        renderer: gl.getContext(),
+        version: gl.getContext().getParameter(gl.getContext().VERSION),
+        vendor: gl.getContext().getParameter(gl.getContext().VENDOR),
+        maxTextureSize: gl.getContext().getParameter(gl.getContext().MAX_TEXTURE_SIZE),
+      });
+      
+      // Set up scene defaults
+      scene.background = new THREE.Color("#111");
+      scene.fog = new THREE.Fog("#111", 100, 200);
+      
+      // Create a basic ground plane
+      const groundGeometry = new THREE.PlaneGeometry(2000, 2000, 1, 1);
+      const groundMaterial = new THREE.MeshBasicMaterial({ 
+        color: "#222", 
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.6 
+      });
+      const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+      ground.rotation.x = Math.PI / 2;
+      ground.position.y = -0.01; // Slightly below origin to avoid z-fighting
+      ground.receiveShadow = true;
+      ground.name = "GroundPlane";
+      scene.add(ground);
+      
+      // Add default lighting
+      const ambientLight = new THREE.AmbientLight(0x666666);
+      ambientLight.name = "AmbientLight";
+      scene.add(ambientLight);
+      
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+      directionalLight.position.set(50, 50, 50);
+      directionalLight.name = "DirectionalLight";
+      scene.add(directionalLight);
+    } catch (err) {
+      console.error("Error setting up 3D scene:", err);
+    }
+    
+    // Clean up function
+    return () => {
+      try {
+        // Properly dispose of scene objects when component unmounts
+        const ground = scene.getObjectByName("GroundPlane");
+        const ambientLight = scene.getObjectByName("AmbientLight");
+        const directionalLight = scene.getObjectByName("DirectionalLight");
+        
+        if (ground) {
+          scene.remove(ground);
+          ground.geometry.dispose();
+          ground.material.dispose();
+        }
+        
+        if (ambientLight) scene.remove(ambientLight);
+        if (directionalLight) scene.remove(directionalLight);
+      } catch (err) {
+        console.error("Error cleaning up scene:", err);
+      }
+    };
+  }, [scene, gl]);
+  
+  return children;
+}
+
+// A simplified version of DroneMissionWrapper that works as a fallback
+const SimpleMissionPlanner = ({ cameraDetails, lensDetails }) => {
+  const { scene } = useThree();
+  
+  // Log scene information
+  useEffect(() => {
+    if (scene) {
+      console.log("SimpleMissionPlanner scene:", {
+        isThreeScene: scene instanceof THREE.Scene,
+        childCount: scene.children?.length
+      });
+    }
+  }, [scene]);
+  
+  // Return a simple placeholder that shows we're in fallback mode
+  return (
+    <group>
+      <Html position={[0, 2, 0]}>
+        <div style={{ 
+          background: 'rgba(0,0,0,0.7)', 
+          color: 'white', 
+          padding: '10px',
+          borderRadius: '5px',
+          maxWidth: '250px',
+          textAlign: 'center',
+          pointerEvents: 'none'
+        }}>
+          <div style={{ marginBottom: '10px', fontWeight: 'bold' }}>
+            Mission Planning Active
+          </div>
+          <div style={{ fontSize: '13px' }}>
+            {cameraDetails ? `Using ${cameraDetails.brand} ${cameraDetails.model}` : 'No camera selected'}
+            <br />
+            {lensDetails ? `${lensDetails.focalLength}mm lens` : 'No lens selected'}
+          </div>
+        </div>
+      </Html>
+      
+      {/* Basic grid for reference */}
+      <gridHelper args={[100, 25]} position={[0, 0.01, 0]} />
+      
+      {/* Simple trajectory visualization */}
+      <mesh position={[0, 0.5, 0]}>
+        <sphereGeometry args={[0.2, 16, 16]} />
+        <meshBasicMaterial color="yellow" />
+      </mesh>
+    </group>
+  );
+};
+
+// Error Boundary component for isolating errors
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error("Error caught by ErrorBoundary:", error);
+    console.error("Component stack:", errorInfo.componentStack);
+    
+    if (this.props.onError) {
+      this.props.onError(error, errorInfo);
+    }
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback || null;
+    }
+    return this.props.children;
+  }
+}
+
+// Create a wrapper to pass scene to DroneMissionEnhanced
+const DroneMissionWrapper = (props) => {
+  const sceneRef = useRef(null);
+  const [useFallback, setUseFallback] = useState(false);
+  
+  try {
+    const three = useThree();
+    
+    // Store scene reference safely
+    useEffect(() => {
+      if (three && three.scene) {
+        sceneRef.current = three.scene;
+      }
+    }, [three]);
+    
+    // If we don't have a scene reference, use the fallback
+    if (!sceneRef.current && !three?.scene) {
+      console.warn("Scene is undefined in DroneMissionWrapper, using fallback");
+      return <SimpleMissionPlanner {...props} />;
+    }
+    
+    // Get the scene from three or from our ref
+    const scene = three?.scene || sceneRef.current;
+    
+    // Use instanceof for proper type checking (more reliable than isScene property)
+    if (!scene || !(scene instanceof THREE.Scene)) {
+      console.warn("Invalid scene object in DroneMissionWrapper, using fallback:", scene);
+      return <SimpleMissionPlanner {...props} />;
+    }
+    
+    // Add debugging
+    console.log("DroneMissionWrapper passing scene:", {
+      isThreeScene: scene instanceof THREE.Scene,
+      childCount: scene.children?.length,
+      userData: scene.userData
+    });
+    
+    // Use the fallback instead if we've previously had issues
+    if (useFallback) {
+      console.log("Using fallback mission planner due to previous issues");
+      return <SimpleMissionPlanner {...props} />;
+    }
+    
+    // Otherwise, use the full component with a valid scene
+    return (
+      <ErrorBoundary 
+        fallback={<SimpleMissionPlanner {...props} />}
+        onError={() => {
+          console.error("Caught error in DroneMissionEnhanced - switching to fallback");
+          setUseFallback(true);
+        }}>
+        <DroneMissionEnhanced {...props} scene={scene} />
+      </ErrorBoundary>
+    );
+  } catch (error) {
+    console.error("Error in DroneMissionWrapper:", error);
+    return <SimpleMissionPlanner {...props} />;
+  }
+};
+
+// Update the ManualDroneControls component
+function ManualDroneControls({ position, rotation, onPositionChange, onRotationChange, performanceSettings, onPerformanceSettingsChange }) {
+  const [activeTab, setActiveTab] = useState('position'); // 'position', 'rotation', or 'advanced'
+  
+  const handlePositionChange = (axis, value) => {
+    if (!onPositionChange) return;
+    
+    // Parse the value and ensure it's a number
+    let numValue = parseFloat(value);
+    
+    // Handle invalid input
+    if (isNaN(numValue)) {
+      numValue = position[axis]; // Keep current value if invalid
+    }
+    
+    // Define min/max values based on axis
+    let min, max;
+    switch(axis) {
+      case 1: // Y axis (height)
+        min = 0;
+        max = 20;
+        break;
+      default: // X and Z axes (horizontal)
+        min = -20;
+        max = 20;
+        break;
+    }
+    
+    // Clamp to min/max values
+    numValue = Math.min(Math.max(numValue, min), max);
+    
+    // Create a new position array to avoid reference issues
+    const newPosition = [...position];
+    newPosition[axis] = numValue;
+    
+    // Call the parent component's handler with the new position
+    onPositionChange(newPosition);
+  };
+
+  const handleRotationChange = (axis, value) => {
+    if (!onRotationChange) return;
+    
+    // Parse the value and ensure it's a number
+    let numValue = parseFloat(value);
+    
+    // Handle invalid input
+    if (isNaN(numValue)) {
+      numValue = THREE.MathUtils.radToDeg(rotation[axis]); // Get current value in degrees
+    }
+    
+    // Clamp to valid rotation values (-180 to 180 degrees)
+    numValue = Math.min(Math.max(numValue, -180), 180);
+    
+    // Convert degrees to radians
+    const radValue = THREE.MathUtils.degToRad(numValue);
+    
+    // Create a new rotation array to avoid reference issues
+    const newRotation = [...rotation];
+    newRotation[axis] = radValue;
+    
+    // Call the parent component's handler with the new rotation
+    onRotationChange(newRotation);
+  };
+
+  return (
+    <div className="manual-drone-controls">
+      <div className="control-tabs">
+        <button 
+          className={`tab-button ${activeTab === 'position' ? 'active' : ''}`} 
+          onClick={() => setActiveTab('position')}
+        >
+          Position
+        </button>
+        <button 
+          className={`tab-button ${activeTab === 'rotation' ? 'active' : ''}`} 
+          onClick={() => setActiveTab('rotation')}
+        >
+          Rotation
+        </button>
+        <button 
+      
+      {activeTab === 'position' && (
+        <div className="control-group">
+          <label>Position</label>
+          <div className="control-row">
+            <div className="control-item">
+              <label>X: (Left/Right)</label>
+              <input 
+                type="range" 
+                min="-20" 
+                max="20" 
+                step="0.1" 
+                value={position[0]} 
+                onChange={(e) => handlePositionChange(0, e.target.value)}
+              />
+              <input 
+                type="number" 
+                value={position[0].toFixed(1)} 
+                step="0.1"
+                onChange={(e) => handlePositionChange(0, e.target.value)}
+                style={{ width: '60px' }} 
+              />
+            </div>
+            <div className="control-item">
+              <label>Y: (Up/Down)</label>
+              <input 
+                type="range" 
+                min="0" 
+                max="20" 
+                step="0.1" 
+                value={position[1]} 
+                onChange={(e) => handlePositionChange(1, e.target.value)}
+              />
+              <input 
+                type="number" 
+                value={position[1].toFixed(1)} 
+                step="0.1"
+                onChange={(e) => handlePositionChange(1, e.target.value)}
+                style={{ width: '60px' }} 
+              />
+            </div>
+            <div className="control-item">
+              <label>Z: (Forward/Back)</label>
+              <input 
+                type="range" 
+                min="-20" 
+                max="20" 
+                step="0.1" 
+                value={position[2]} 
+                onChange={(e) => handlePositionChange(2, e.target.value)}
+              />
+              <input 
+                type="number" 
+                value={position[2].toFixed(1)} 
+                step="0.1"
+                onChange={(e) => handlePositionChange(2, e.target.value)}
+                style={{ width: '60px' }} 
+              />
+            </div>
+          </div>
+        </div>
+      )}
+      {activeTab === 'rotation' && (
+        <div className="control-group">
+          <label>Rotation (degrees)</label>
+          <div className="control-row">
+            <div className="control-item">
+              <label>X:</label>
+              <input 
+                type="range" 
+                min="-180" 
+                max="180" 
+                step="1" 
+                value={THREE.MathUtils.radToDeg(rotation[0])} 
+                onChange={(e) => handleRotationChange(0, e.target.value)}
+              />
+              <input 
+                type="number" 
+                value={THREE.MathUtils.radToDeg(rotation[0]).toFixed(0)} 
+                step="1"
+                onChange={(e) => handleRotationChange(0, e.target.value)}
+                style={{ width: '60px' }} 
+              />
+            </div>
+            <div className="control-item">
+              <label>Y:</label>
+              <input 
+                type="range" 
+                min="-180" 
+                max="180" 
+                step="1" 
+                value={THREE.MathUtils.radToDeg(rotation[1])} 
+                onChange={(e) => handleRotationChange(1, e.target.value)}
+              />
+              <input 
+                type="number" 
+                value={THREE.MathUtils.radToDeg(rotation[1]).toFixed(0)} 
+                step="1"
+                onChange={(e) => handleRotationChange(1, e.target.value)}
+                style={{ width: '60px' }} 
+              />
+            </div>
+            <div className="control-item">
+              <label>Z:</label>
+              <input 
+                type="range" 
+                min="-180" 
+                max="180" 
+                step="1" 
+                value={THREE.MathUtils.radToDeg(rotation[2])} 
+                onChange={(e) => handleRotationChange(2, e.target.value)}
+              />
+              <input 
+                type="number" 
+                value={THREE.MathUtils.radToDeg(rotation[2]).toFixed(0)} 
+                step="1"
+                onChange={(e) => handleRotationChange(2, e.target.value)}
+                style={{ width: '60px' }} 
+              />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Simple drone model representation as a colored box
+function DroneModel({ position, rotation, scale = 1 }) {
+  return (
+    <mesh position={position} rotation={rotation ? rotation.map(r => THREE.MathUtils.degToRad(r)) : [0, 0, 0]} castShadow>
+      <boxGeometry args={[1 * scale, 0.3 * scale, 1 * scale]} />
+      <meshStandardMaterial color="#3498db" />
+    </mesh>
+  );
+}
+
+// Reducer for drone state
+function droneStateReducer(state, action) {
+  switch (action.type) {
+    case 'UPDATE_POSITION':
+      // Create a completely new position array to ensure React detects the state change
+      return { 
+        ...state, 
+        position: action.payload 
+      };
+    case 'UPDATE_ROTATION':
+      // Create a completely new rotation array to ensure React detects the state change
+      return { 
+        ...state, 
+        rotation: action.payload 
+      };
+    case 'UPDATE_POSITION_AXIS':
+      // Update a single axis of position
+      const newPosition = [...state.position];
+      newPosition[action.payload.axis] = action.payload.value;
+      return {
+        ...state,
+        position: newPosition
+      };
+    case 'UPDATE_ROTATION_AXIS':
+      // Update a single axis of rotation
+      const newRotation = [...state.rotation];
+      newRotation[action.payload.axis] = action.payload.value;
+      return {
+        ...state,
+        rotation: newRotation
+      };
+    default:
+      return state;
+  }
+}
+
+// Add a customized camera control component that preserves state when following the drone
+function CameraControls({ dronePosition, followDrone, centerOnMap, cameraOffset = [5, 5, 5], moveCamera = true }) {
+  const camera = useThree((state) => state.camera);
+  const controls = useRef(null);
+  const prevPositionRef = useRef(dronePosition);
+  const mapCenterPosition = [0, 0, 0];
+  
+  // Keep track of initial camera position and target for smooth transitions
+  const initialPositionRef = useRef(null);
+  const initialTargetRef = useRef(null);
+  const isInitializedRef = useRef(false);
+  
+  // Store camera offset for position calculations
+  const offset = useMemo(() => {
+    return new THREE.Vector3(...cameraOffset);
+  }, [cameraOffset]);
+
+  // Initialize camera controls on first render
+  useEffect(() => {
+    if (controls.current && !isInitializedRef.current) {
+      initialPositionRef.current = camera.position.clone();
+      initialTargetRef.current = controls.current.target.clone();
+      isInitializedRef.current = true;
+      console.log("Camera controls initialized");
+    }
+  }, [camera]);
+
+  // Update camera target based on the selected mode
+  useEffect(() => {
+    try {
+      if (!controls.current || !isInitializedRef.current) return;
+      
+      // Position to focus on
+      let targetPosition;
+      
+      if (followDrone) {
+        // Follow the drone
+        targetPosition = new THREE.Vector3(...dronePosition);
+      } else if (centerOnMap) {
+        // Center on map
+        targetPosition = new THREE.Vector3(...mapCenterPosition);
+      } else {
+        // Free mode - do nothing
+        return;
+      }
+      
+      // Update the orbit controls target
+      if (moveCamera) {
+        controls.current.target.copy(targetPosition);
+        
+        // If following drone, adjust camera position to maintain relative position
+        if (followDrone) {
+          const pos = prevPositionRef.current;
+          const delta = [
+            dronePosition[0] - pos[0],
+            dronePosition[1] - pos[1],
+            dronePosition[2] - pos[2]
+          ];
+          
+          camera.position.x += delta[0];
+          camera.position.y += delta[1];
+          camera.position.z += delta[2];
+        }
+      }
+      
+      prevPositionRef.current = dronePosition;
+    } catch (err) {
+      console.error("Error updating camera target:", err);
+    }
+  }, [dronePosition, followDrone, centerOnMap, moveCamera, camera]);
+
+  return (
+    <OrbitControls
+      ref={controls}
+      enableDamping={true}
+      dampingFactor={0.1}
+      rotateSpeed={0.7}
+      minDistance={1}
+      maxDistance={200}
+    />
+  );
+}
+
+// Create a Model component that can handle different 3D model types
+const Model = ({ modelPath, modelType, scale = 1, opacity = 1, position = [0, 0, 0], rotation = [0, 0, 0] }) => {
+  const [error, setError] = useState(null);
+  const modelRef = useRef();
+  const [geometry, setGeometry] = useState(null);
+  const [materials, setMaterials] = useState([]);
+  
+  // Model loading logic
+  useEffect(() => {
+    if (!modelPath) return;
+    
+    // Clean up previous model resources
+    return () => {
+      if (geometry) {
+        geometry.dispose();
+      }
+      materials.forEach(material => {
+        if (material.map) material.map.dispose();
+        material.dispose();
+      });
+    };
+  }, [modelPath, geometry, materials]);
+  
+  // Handle OBJ model loading
+  const handleLoad = useCallback((object) => {
+    try {
+      console.log("Model loaded successfully:", object);
+      
+      // Store geometries and materials for later cleanup
+      const geoms = [];
+      const mats = [];
+      
+      object.traverse(child => {
+        if (child.isMesh) {
+          geoms.push(child.geometry);
+          if (Array.isArray(child.material)) {
+            child.material.forEach(m => mats.push(m));
+          } else {
+            mats.push(child.material);
+          }
+          
+          // Set opacity if needed
+          if (opacity < 1) {
+            if (Array.isArray(child.material)) {
+              child.material.forEach(m => {
+                m.transparent = true;
+                m.opacity = opacity;
+              });
+            } else {
+              child.material.transparent = true;
+              child.material.opacity = opacity;
+            }
+          }
+          
+          // Enable shadows
+          child.castShadow = true;
+          child.receiveShadow = true;
+        }
+      });
+      
+      // Store refs for cleanup
+      if (geoms.length > 0) setGeometry(geoms[0]);
+      if (mats.length > 0) setMaterials(mats);
+      
+    } catch (err) {
+      console.error("Error processing loaded model:", err);
+      setError(`Error processing model: ${err.message}`);
+    }
+  }, [opacity]);
+  
+  // Handle loading error
+  const handleError = useCallback((err) => {
+    console.error("Error loading model:", err);
+    setError(`Failed to load model: ${err.message || "Unknown error"}`);
+  }, []);
+  
+  // If error occurred, show error message
+  if (error) {
+    return (
+      <mesh position={position}>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshBasicMaterial color="red" wireframe />
+        <Html center>
+          <div style={{ 
+            background: 'rgba(255,0,0,0.8)', 
+            color: 'white',
+            padding: '10px',
+            borderRadius: '5px',
+            maxWidth: '200px',
+            textAlign: 'center'
+          }}>
+            {error}
+          </div>
+        </Html>
+      </mesh>
+    );
+  }
+  
+  return (
+    <group ref={modelRef} position={position} rotation={rotation} scale={[scale, scale, scale]}>
+      {modelType === 'obj' && (
+        <Suspense fallback={<mesh><boxGeometry args={[1, 1, 1]} /><meshBasicMaterial color="#4488ff" wireframe /></mesh>}>
+          <OBJLoader 
+            url={modelPath}
+            onLoad={handleLoad}
+            onError={handleError}
+          />
+        </Suspense>
+      )}
+      {modelType === 'ply' && (
+        <Suspense fallback={<mesh><boxGeometry args={[1, 1, 1]} /><meshBasicMaterial color="#4488ff" wireframe /></mesh>}>
+          <PLYLoader 
+            url={modelPath}
+            onLoad={handleLoad}
+            onError={handleError}
+          />
+        </Suspense>
+      )}
+    </group>
+  );
+};
+
+// Point Cloud component for LiDAR data
+const PointCloud = ({ url, scale = 1, opacity = 1, pointSize = 0.01, position = [0, 0, 0] }) => {
+  const [points, setPoints] = useState(null);
+  const [error, setError] = useState(null);
+  const pointsRef = useRef();
+  
+  useEffect(() => {
+    if (!url) return;
+    
+    setError(null);
+    
+    const fileExtension = url.split('.').pop().toLowerCase();
+    let loader;
+    
+    try {
+      // Select the appropriate loader based on file extension
+      if (fileExtension === 'pcd') {
+        loader = new PCDLoader();
+      } else if (['las', 'laz'].includes(fileExtension)) {
+        // This is a placeholder - THREE.js doesn't have a built-in LASLoader
+        // In a real implementation, you would need to add a library like potree or laspy
+        console.warn('LAS/LAZ file support requires additional libraries');
+        setError('LAS/LAZ file support is not fully implemented');
+        return;
+      } else if (fileExtension === 'pcap') {
+        // PCAP processing typically requires server-side processing
+        console.warn('PCAP file processing typically requires server-side conversion');
+        setError('PCAP file processing is not implemented in the browser');
+        return;
+      } else {
+        setError(`Unsupported point cloud format: ${fileExtension}`);
+        return;
+      }
+      
+      loader.load(url, (pointcloud) => {
+        console.log('Point cloud loaded:', pointcloud);
+        
+        // Check if the point cloud has valid data
+        if (!pointcloud.geometry || !pointcloud.geometry.attributes.position) {
+          setError('Point cloud has no valid geometry data');
+          return;
+        }
+        
+        const totalPoints = pointcloud.geometry.attributes.position.count;
+        console.log(`Total points: ${totalPoints}`);
+        
+        if (totalPoints === 0) {
+          setError('Point cloud contains no points');
+          return;
+        }
+        
+        setPoints(pointcloud);
+      }, 
+      (progress) => {
+        console.log(`Loading progress: ${Math.round((progress.loaded / progress.total) * 100)}%`);
+      },
+      (error) => {
+        console.error('Error loading point cloud:', error);
+        setError(`Error loading point cloud: ${error.message}`);
+      });
+    } catch (err) {
+      console.error('Exception loading point cloud:', err);
+      setError(`Exception loading point cloud: ${err.message}`);
+    }
+    
+    return () => {
+      // Cleanup
+      if (points) {
+        if (points.geometry) points.geometry.dispose();
+        if (points.material) points.material.dispose();
+      }
+    };
+  }, [url]);
+  
+  useEffect(() => {
+    if (pointsRef.current && points) {
+      // Update point size and scale
+      pointsRef.current.scale.set(scale, scale, scale);
+      
+      if (pointsRef.current.material) {
+        pointsRef.current.material.size = pointSize;
+        pointsRef.current.material.opacity = opacity;
+        pointsRef.current.material.transparent = opacity < 1;
+      }
+    }
+  }, [scale, opacity, pointSize, points]);
+  
+  if (error) {
+    return (
+      <Text position={[0, 1, 0]} color="red" fontSize={0.2} anchorX="center" anchorY="middle">
+        {error}
+      </Text>
+    );
+  }
+  
+  return points ? (
+    <primitive 
+      ref={pointsRef}
+      object={points} 
+      position={position}
+      dispose={null}
+    />
+  ) : (
+    <mesh position={position}>
+      <sphereGeometry args={[0.2, 16, 16]} />
+      <meshBasicMaterial color="#4f88e3" wireframe />
+    </mesh>
+  );
+};
+
+// After the ManualDroneControls function, add this new function:
+
+// Advanced Controls Panel for WebGL performance settings and unit selection
+function AdvancedControlsPanel({ performanceSettings, onPerformanceSettingsChange }) {
+  const [memoryStats, setMemoryStats] = useState(null);
+  const [fpsStats, setFpsStats] = useState({ current: 60, average: 60 });
+  const [deviceCapabilities, setDeviceCapabilities] = useState(null);
+  
+  // Monitor system stats
+  useEffect(() => {
+    // Check for WebGL capabilities
+    const checkCapabilities = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
+        
+        if (!gl) {
+          return { webglVersion: 'Not available' };
+        }
+        
+        return {
+          webglVersion: gl.getParameter(gl.VERSION),
+          renderer: gl.getParameter(gl.RENDERER),
+          vendor: gl.getParameter(gl.VENDOR),
+          maxTextureSize: gl.getParameter(gl.MAX_TEXTURE_SIZE),
+          maxPointsRecommended: gl.getParameter(gl.MAX_TEXTURE_SIZE) > 8192 ? 1000000 : 500000
+        };
+      } catch (e) {
+        console.error('Error detecting WebGL capabilities:', e);
+        return { webglVersion: 'Error detecting' };
+      }
+    };
+    
+    // Set device capabilities
+    setDeviceCapabilities(checkCapabilities());
+    
+    // Monitor memory
+    const memoryInterval = setInterval(() => {
+      if (window.performance && window.performance.memory) {
+        setMemoryStats({
+          usedJSHeapSize: window.performance.memory.usedJSHeapSize,
+          jsHeapSizeLimit: window.performance.memory.jsHeapSizeLimit,
+          totalJSHeapSize: window.performance.memory.totalJSHeapSize
+        });
+      }
+    }, 2000);
+    
+    return () => {
+      clearInterval(memoryInterval);
+    };
+  }, []);
+  
+  return (
+    <div className="advanced-controls-panel">
+      <AdvancedControls
+        performanceSettings={performanceSettings}
+        onPerformanceSettingsChange={onPerformanceSettingsChange}
+        memoryStats={memoryStats}
+        fpsStats={fpsStats}
+        deviceCapabilities={deviceCapabilities}
+      />
+    </div>
+  );
+}
+
+// Then in the MissionPlanner function, add the state for performance settings
+// and use the AdvancedControlsPanel in the UI, after the controls for the drone
+
+// Enhanced Mission Planner with OBJ, PLY and PCAP import
+function MissionPlanner({ initialCameraDetails, initialLensDetails, initialDofCalculations }) {
+  console.log("MissionPlanner rendering", { initialCameraDetails, initialLensDetails, initialDofCalculations });
+  
+  // Add performance settings state
+  const [performanceSettings, setPerformanceSettings] = useState({
+    lowQualityMode: false,
+    powerSavingMode: false,
+    shadowsEnabled: true,
+    maxFps: 60,
+    pointBudget: 1000000,
+    frustumCulling: true,
+    showGrid: true,
+    showAxes: true,
+    highQualityShadows: true,
+    unitsSystem: 'metric'
+  });
+  
+  // Handle performance settings changes
+  const handlePerformanceSettingsChange = (newSettings) => {
+    setPerformanceSettings(prevSettings => ({
+      ...prevSettings,
+      ...newSettings
+    }));
+  };
+
+  // Basic state for mission planning
+  const [waypoints, setWaypoints] = useState([
+    [0, 0, 0],
+    [2, 1, 2],
+    [4, 2, 0],
+    [2, 1, -2]
+  ]);
+  
+  // Add a ref to store the current model data
+  const modelDataRef = useRef(null);
+  
+  // Menu collapse state
+  const [isMenuCollapsed, setIsMenuCollapsed] = useState(false);
+  
+  // Add collapsible section states
+  const [isCameraOptionsExpanded, setIsCameraOptionsExpanded] = useState(true);
+  const [isCameraModeExpanded, setIsCameraModeExpanded] = useState(true);
+  const [isModelControlsExpanded, setIsModelControlsExpanded] = useState(true);
+  
+  // File import states
+  const [importedModel, setImportedModel] = useState(null);
+  const [pointCloud, setPointCloud] = useState(null);
+  const [importError, setImportError] = useState('');
+  const [importSuccess, setImportSuccess] = useState('');
+  const [modelScale, setModelScale] = useState(1.0);
+  const [autoScaleModel, setAutoScaleModel] = useState(true);
+  const [pointSize, setPointSize] = useState(0.01);
+  const [modelOpacity, setModelOpacity] = useState(1.0);
+  const [pointCloudOpacity, setPointCloudOpacity] = useState(1);
+  
+  // Add a debounce for scale changes
+  const [pendingScale, setPendingScale] = useState(1.0);
+  
+  // Throttled scale change handler
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (pendingScale !== modelScale) {
+        console.log(`Applying throttled scale change: ${pendingScale}`);
+        setModelScale(pendingScale);
+      }
+    }, 100); // 100ms throttle
+    
+    return () => clearTimeout(timer);
+  }, [pendingScale]);
+  
+  // Drone configuration state
+  const [selectedDroneConfig, setSelectedDroneConfig] = useState(null);
+  
+  // Camera and lens details - use provided props or selected drone config
+  const [cameraDetails, setCameraDetails] = useState(initialCameraDetails);
+  const [lensDetails, setLensDetails] = useState(initialLensDetails);
+  const [dofCalculations, setDofCalculations] = useState(initialDofCalculations);
+  
+  // Visualization mode
+  const [viewMode, setViewMode] = useState('perspective');
+  
+  // Drone mission planner states
+  const [missionTrajectory, setMissionTrajectory] = useState(null);
+  const [missionPlannerVisible, setMissionPlannerVisible] = useState(false);
+
+  // And replace with:
+  const [droneState, dispatchDroneState] = useReducer(droneStateReducer, {
+    position: [0, 2, 0],
+    rotation: [0, 0, 0]
+  });
+
+  // Create access properties for easier reference
+  const dronePosition = droneState.position;
+  const droneRotation = droneState.rotation;
+
+  // Replace all setDronePosition calls with:
+  const setDronePosition = (newPosition) => {
+    // Validate the input is an array of 3 numbers
+    if (Array.isArray(newPosition) && newPosition.length === 3 && 
+        newPosition.every(val => typeof val === 'number' && !isNaN(val))) {
+      dispatchDroneState({ type: 'UPDATE_POSITION', payload: newPosition });
+    } else {
+      console.error('Invalid position:', newPosition);
+    }
+  };
+
+  // Replace all setDroneRotation calls with:
+  const setDroneRotation = (newRotation) => {
+    // Validate the input is an array of 3 numbers
+    if (Array.isArray(newRotation) && newRotation.length === 3 && 
+        newRotation.every(val => typeof val === 'number' && !isNaN(val))) {
+      dispatchDroneState({ type: 'UPDATE_ROTATION', payload: newRotation });
+    } else {
+      console.error('Invalid rotation:', newRotation);
+    }
+  };
+
+  // Add improved handlers for setting individual axis values
+  const setDronePositionAxis = (axis, value) => {
+    if (axis >= 0 && axis <= 2 && typeof value === 'number' && !isNaN(value)) {
+      dispatchDroneState({ 
+        type: 'UPDATE_POSITION_AXIS', 
+        payload: { axis, value } 
+      });
+    } else {
+      console.error('Invalid position axis update:', axis, value);
+    }
+  };
+
+  const setDroneRotationAxis = (axis, value) => {
+    if (axis >= 0 && axis <= 2 && typeof value === 'number' && !isNaN(value)) {
+      dispatchDroneState({ 
+        type: 'UPDATE_ROTATION_AXIS', 
+        payload: { axis, value } 
+      });
+    } else {
+      console.error('Invalid rotation axis update:', axis, value);
+    }
+  };
+
+  // Add a debug effect to monitor state changes
+  useEffect(() => {
+    console.log('Drone position updated:', dronePosition);
+  }, [droneState.position]);
+
+  useEffect(() => {
+    console.log('Drone rotation updated:', droneRotation);
+  }, [droneState.rotation]);
+
+  // Reference to track blob URLs for cleanup
+  const modelUrlsRef = useRef([]);
+
+  // Update camera and lens details when drone config changes
+  useEffect(() => {
+    if (selectedDroneConfig) {
+      setCameraDetails(selectedDroneConfig.camera);
+      setLensDetails(selectedDroneConfig.lens);
+    }
+  }, [selectedDroneConfig]);
+
+  // Update drone position when model is loaded
+  const handleModelLoaded = (modelData) => {
+    console.log('Model loaded successfully:', modelData);
+    
+    // Store model data in ref for future reference
+    modelDataRef.current = modelData;
+    
+    // Show success message with vertices count if available
+    if (selectedDroneConfig) {
+      setImportSuccess(`Drone model "${selectedDroneConfig?.drone?.model}" loaded successfully${modelData.vertices ? ` (${modelData.vertices} vertices)` : ''}`);
+    } else {
+      setImportSuccess(`Model "${importedModel?.name}" loaded successfully${modelData.vertices ? ` (${modelData.vertices} vertices)` : ''}`);
+    }
+    
+    // Clear any previous errors
+    setImportError('');
+    
+    // Reset drone position to origin
+    setDronePosition([0, 0, 0]);
+    setDroneRotation([0, 0, 0]);
+  };
+
+  // Handle drone configuration selection
+  const handleDroneConfigSelected = (config) => {
+    console.log("Selected drone configuration:", config);
+    setSelectedDroneConfig(config);
+    
+    // Update camera and lens details
+    if (config && config.camera) {
+      setCameraDetails(config.camera);
+    }
+    if (config && config.lens) {
+      setLensDetails(config.lens);
+    }
+    
+    // Reset drone position to default height
+    setDronePosition([0, 2, 0]);
+    setDroneRotation([0, 0, 0]);
+  };
+
+  // Add missing handleFileImport function
+  const handleFileImport = (event) => {
+    if (!event.target.files || event.target.files.length === 0) {
+      console.log("No files selected for import");
+      return;
+    }
+    
+    const file = event.target.files[0];
+    const importType = event.target.id === 'lidar-upload' ? 'lidar' : '3d';
+    
+    console.log(`File selected for ${importType} import:`, file.name, file.type, file.size);
+    
+    // Reset any previous model data
+    setImportError('');
+    setImportSuccess('');
+    
+    // First, validate file size to avoid browser crashes with large files
+    const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB limit
+    if (file.size > MAX_FILE_SIZE) {
+      setImportError(`File is too large (${(file.size / (1024 * 1024)).toFixed(1)}MB). Maximum size is 15MB.`);
+      return;
+    }
+    
+    // Validate file extension
+    const fileExtension = file.name.split('.').pop().toLowerCase();
+    
+    // Check file type based on import type
+    if (importType === 'lidar') {
+      if (!['pcap', 'las', 'laz'].includes(fileExtension)) {
+        console.error(`Unsupported LiDAR file type: ${fileExtension}`);
+        setImportError(`Unsupported LiDAR file type: ${fileExtension}. Please use .pcap, .las, or .laz files.`);
+        return;
+      }
+      
+      // Process LiDAR file
+      createModelFromFile(file, 'lidar');
+      
+    } else {
+      // 3D model import
+      if (!['obj', 'ply'].includes(fileExtension)) {
+        console.error(`Unsupported 3D model file type: ${fileExtension}`);
+        setImportError(`Unsupported 3D model file type: ${fileExtension}. Please use .obj or .ply files.`);
+        return;
+      }
+      
+      // Special validation for OBJ files - quick check for basic OBJ structure
+      if (fileExtension === 'obj') {
+        const reader = new FileReader();
+        
+        reader.onload = (e) => {
+          try {
+            const contents = e.target.result;
+            const lines = contents.split('\n').slice(0, 50); // Check first 50 lines
+            
+            // Check if this looks like a valid OBJ file
+            const hasVertices = lines.some(line => line.trim().startsWith('v '));
+            const hasFaces = lines.some(line => line.trim().startsWith('f '));
+            
+            if (!hasVertices) {
+              setImportError('Invalid OBJ file: No vertices found.');
+              return;
+            }
+            
+            if (!hasFaces && lines.length >= 50) {
+              console.warn('OBJ file might be missing faces');
+            }
+            
+            // If validation passes, proceed with creating the blob URL
+            createModelFromFile(file, '3d');
+          } catch (err) {
+            console.error("Error validating OBJ file:", err);
+            setImportError(`Error validating OBJ file: ${err.message}`);
+          }
+        };
+        
+        reader.onerror = () => {
+          setImportError('Error reading the file. The file might be corrupted.');
+        };
+        
+        // Start reading a small portion of the file as text
+        const blob = file.slice(0, Math.min(file.size, 10000)); // Read first 10KB
+        reader.readAsText(blob);
+      } else {
+        // For other file types, proceed without validation
+        createModelFromFile(file, '3d');
+      }
+    }
+    
+    // Clear the file input to allow re-importing the same file if needed
+    event.target.value = null;
+  };
+  
+  // Function to create a model from a file after validation
+  const createModelFromFile = (file, importType) => {
+    // Clean up previous blob URL if it exists to prevent memory leaks
+    if (uploadedModelUrl) {
+      console.log("Revoking previous blob URL:", uploadedModelUrl);
+      URL.revokeObjectURL(uploadedModelUrl.split('?')[0]); // Extract the base URL without query params
+    }
+    
+    try {
+      // Get the file extension to determine model type
+      const fileExt = file.name.split('.').pop().toLowerCase();
+      
+      // Create a blob URL with proper MIME type based on file extension
+      let mimeType = 'application/octet-stream'; // Default fallback
+      if (fileExt === 'obj') mimeType = 'model/obj';
+      if (fileExt === 'ply') mimeType = 'model/ply';
+      if (fileExt === 'pcd') mimeType = 'model/pcd';
+      
+      // Create blob URL with the correct MIME type
+      const baseURL = URL.createObjectURL(file);
+      
+      // Add the original filename as a query parameter to help with format detection
+      // This is crucial for THREE.js loaders to determine file type
+      const enhancedURL = `${baseURL}?filename=${encodeURIComponent(file.name)}`;
+      
+      console.log(`Created blob URL for ${file.name} (${Math.round(file.size / 1024)}KB): ${enhancedURL}`);
+      
+      // Store URL for cleanup and state management
+      setUploadedModelUrl(enhancedURL); // Save for future cleanup
+      setSelectedModel({
+        name: file.name,
+        url: enhancedURL,
+        type: importType || fileExt,
+        size: file.size
+      });
+      
+      // Reset model properties
+      setModelScale(1.0);
+      setModelOpacity(1.0);
+      
+      // For LiDAR data, set a reasonable default point size
+      if (fileExt === 'pcd' || fileExt === 'ply' || importType === 'lidar') {
+        setPointSize(0.05);
+      }
+      
+      // Make model visible
+      setModelVisible(true);
+      
+      // Return the enhanced URL
+      return enhancedURL;
+    } catch (error) {
+      console.error("Error creating model from file:", error);
+      handleModelError(error);
+      return null;
+    }
+  };
+
+  // Update state when props change
+  useEffect(() => {
+    if (initialCameraDetails) setCameraDetails(initialCameraDetails);
+    if (initialLensDetails) setLensDetails(initialLensDetails);
+    if (initialDofCalculations) setDofCalculations(initialDofCalculations);
+  }, [initialCameraDetails, initialLensDetails, initialDofCalculations]);
+
+  // Handle model loading errors
+  const handleModelError = (error) => {
+    console.error("Model loading error:", error);
+    setImportError(`Error loading model: ${error.message}`);
+    // Clear any stale success message
+    setImportSuccess('');
+  };
+
+  // Add a cleanup function to component unmount
+  useEffect(() => {
+    return () => {
+      // Clean up all tracked blob URLs when component unmounts
+      console.log("MissionPlanner unmounting - cleaning up blob URLs");
+      try {
+        modelUrlsRef.current.forEach(url => {
+          if (url && url.startsWith('blob:')) {
+            try {
+              URL.revokeObjectURL(url);
+              console.log("Cleaned up blob URL:", url);
+            } catch (err) {
+              console.error("Error revoking blob URL:", err);
+            }
+          }
+        });
+        modelUrlsRef.current = [];
+      } catch (err) {
+        console.error("Error during blob URL cleanup in MissionPlanner:", err);
+      }
+    };
+  }, []);
+
+  // Toggle import panel collapse
+  const toggleImportPanel = () => {
+    setIsMenuCollapsed(!isMenuCollapsed);
+  };
+
+  // Add a useEffect to log position changes for debugging
+  useEffect(() => {
+    console.log("Drone position updated:", dronePosition);
+  }, [dronePosition]);
+  
+  useEffect(() => {
+    console.log("Drone rotation updated:", droneRotation);
+  }, [droneRotation]);
+
+  // After the droneState reducer setup, add these missing state variables
+  const [showFrustum, setShowFrustum] = useState(false);
+  const [frustumScale, setFrustumScale] = useState(1.0);
+  const [modelVisible, setModelVisible] = useState(true);
+  // Add follow drone state at the MissionPlanner level
+  const [followDrone, setFollowDrone] = useState(false);
+  // Add center map option
+  const [centerOnMap, setCenterOnMap] = useState(true);
+
+  // After all the other state variables in the MissionPlanner component, add these missing ones:
+  const [uploadedFile, setUploadedFile] = useState(null);
+  const [modelType, setModelType] = useState(null);
+  const [errorMessage, setErrorMessage] = useState(null);
+  const [pointCloudWorkerCleanup, setPointCloudWorkerCleanup] = useState(null);
+  const [uploadedModelUrl, setUploadedModelUrl] = useState(null); // Track current blob URL
+  const [selectedModel, setSelectedModel] = useState(null);
+  const [importType, setImportType] = useState('3d'); // Default to 3D model
+
+  // Cleanup blob URLs when component unmounts or when new model is loaded
+  useEffect(() => {
+    // Return a cleanup function
+    return () => {
+      // Clean up the current blob URL on unmount
+      if (uploadedModelUrl) {
+        console.log("Component unmounting - cleaning up blob URL:", uploadedModelUrl);
+        try {
+          // Extract base URL (without query parameters)
+          const baseUrl = uploadedModelUrl.split('?')[0];
+          URL.revokeObjectURL(baseUrl);
+        } catch (err) {
+          console.error("Error cleaning up blob URL:", err);
+        }
+      }
+    };
+  }, [uploadedModelUrl]); // Re-run when the current URL changes
+
+  // Then in the MissionPlanner function, add the state for performance settings
+  // and use the AdvancedControlsPanel in the UI, after the controls for the drone
+
+  return (
+    <MissionPlannerContainer>
+      <ControlsPanel>
+        <FileControls>
+          <ImportButton 
+            onClick={() => document.getElementById('model-upload').click()}
+            startIcon={<FiBox />}
+          >
+            3D Model Import
+          </ImportButton>
+          <input
+            id="model-upload"
+            type="file"
+            accept=".obj,.ply"
+            style={{ display: 'none' }}
+            onChange={handleFileImport}
+          />
+          
+          <ImportButton 
+            onClick={() => document.getElementById('lidar-upload').click()}
+            startIcon={<FiMaximize />}
+          >
+            LiDAR Import
+          </ImportButton>
+          <input
+            id="lidar-upload"
+            type="file"
+            accept=".pcap,.las,.laz"
+            style={{ display: 'none' }}
+            onChange={handleFileImport}
+          />
+          
+          {/* Add status messages for import */}
+          {importError && (
+            <div style={{ 
+              color: '#ff6b6b', 
+              marginTop: '8px', 
+              fontSize: '12px',
+              padding: '8px',
+              background: 'rgba(255,0,0,0.1)',
+              borderRadius: '4px'
+            }}>
+              {importError}
+            </div>
+          )}
+          
+          {importSuccess && !importError && (
+            <div style={{ 
+              color: '#6bff9e', 
+              marginTop: '8px', 
+              fontSize: '12px',
+              padding: '8px',
+              background: 'rgba(0,255,0,0.1)',
+              borderRadius: '4px'
+            }}>
+              {importSuccess}
+            </div>
+          )}
+          
+          {importedModel && (
+            <ViewControls style={{ marginTop: '12px' }}>
+              <ViewControlsHeader onClick={() => setIsModelControlsExpanded(!isModelControlsExpanded)}>
+                <span>
+                  {importedModel.importType === 'lidar' ? (
+                    <><FiMaximize style={{ marginRight: '8px' }} /> LiDAR Controls</>
+                  ) : (
+                    <><FiBox style={{ marginRight: '8px' }} /> Model Controls</>
+                  )}
+                </span>
+                {isModelControlsExpanded ? <FiChevronUp /> : <FiChevronDown />}
+              </ViewControlsHeader>
+              
+              <SectionContent isExpanded={isModelControlsExpanded}>
+                <div className="control-group">
+                  <label>{importedModel.importType === 'lidar' ? 'LiDAR' : 'Model'} Visible</label>
+                  <input
+                    type="checkbox"
+                    checked={modelVisible}
+                    onChange={() => setModelVisible(!modelVisible)}
+                  />
+                </div>
+                
+                <SliderContainer>
+                  <SliderLabel>Scale</SliderLabel>
+                  <SliderInput
+                    type="range"
+                    min="0.1"
+                    max="10"
+                    step="0.1"
+                    value={modelScale}
+                    onChange={(e) => setModelScale(parseFloat(e.target.value))}
+                  />
+                  <SliderValue>{modelScale.toFixed(1)}</SliderValue>
+                </SliderContainer>
+                
+                <SliderContainer>
+                  <SliderLabel>Opacity</SliderLabel>
+                  <SliderInput
+                    type="range"
+                    min="0.1"
+                    max="1"
+                    step="0.1"
+                    value={modelOpacity}
+                    onChange={(e) => setModelOpacity(parseFloat(e.target.value))}
+                  />
+                  <SliderValue>{modelOpacity.toFixed(1)}</SliderValue>
+                </SliderContainer>
+
+                {importedModel.importType === 'lidar' && (
+                  <SliderContainer>
+                    <SliderLabel>
+                      <FiMaximize style={{ marginRight: '4px', verticalAlign: 'middle' }} /> 
+                      Point Size
+                    </SliderLabel>
+                    <SliderInput
+                      type="range"
+                      min="0.01"
+                      max="0.5"
+                      step="0.01"
+                      value={pointSize}
+                      onChange={(e) => setPointSize(parseFloat(e.target.value))}
+                    />
+                    <SliderValue>{pointSize.toFixed(2)}</SliderValue>
+                  </SliderContainer>
+                )}
+              </SectionContent>
+            </ViewControls>
+          )}
+        </FileControls>
+        
+        <ViewControls>
+          <ViewControlsHeader onClick={() => setIsCameraOptionsExpanded(!isCameraOptionsExpanded)}>
+            <span><FiCamera style={{ marginRight: '8px' }} /> Camera Options</span>
+            {isCameraOptionsExpanded ? <FiChevronUp /> : <FiChevronDown />}
+          </ViewControlsHeader>
+          
+          <SectionContent isExpanded={isCameraOptionsExpanded}>
+            <ViewButton
+              onClick={() => setShowFrustum(!showFrustum)}
+              variant={showFrustum ? "contained" : "outlined"}
+              className={showFrustum ? "active" : ""}
+              size="small"
+            >
+              <span><FiCrosshair style={{ marginRight: '8px' }} /> Camera Frustum</span>
+              <span className="status">{showFrustum ? "Visible" : "Hidden"}</span>
+            </ViewButton>
+            
+            {showFrustum && (
+              <SliderContainer>
+                <SliderLabel>
+                  <FiZoomIn style={{ marginRight: '4px', verticalAlign: 'middle' }} /> 
+                  Frustum Scale
+                </SliderLabel>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <SliderInput
+                    type="range"
+                    min="0.5"
+                    max="3"
+                    step="0.1"
+                    value={frustumScale}
+                    onChange={(e) => setFrustumScale(parseFloat(e.target.value))}
+                  />
+                  <SliderValue>{frustumScale.toFixed(1)}x</SliderValue>
+                </div>
+                <HelpText>Adjust the size of the camera frustum visualization</HelpText>
+              </SliderContainer>
+            )}
+          </SectionContent>
+          
+          <ViewControlsHeader onClick={() => setIsCameraModeExpanded(!isCameraModeExpanded)}>
+            <span><FiTarget style={{ marginRight: '8px' }} /> Camera Mode</span>
+            {isCameraModeExpanded ? <FiChevronUp /> : <FiChevronDown />}
+          </ViewControlsHeader>
+          
+          <SectionContent isExpanded={isCameraModeExpanded}>
+            <ViewButton
+              onClick={() => {
+                setCenterOnMap(!centerOnMap);
+                // If enabling center on map, disable follow drone
+                if (!centerOnMap) {
+                  setFollowDrone(false);
+                }
+              }}
+              variant={centerOnMap ? "contained" : "outlined"}
+              className={centerOnMap ? "active" : ""}
+              size="small"
+              disabled={followDrone}
+            >
+              <span><FiMap style={{ marginRight: '8px' }} /> Center on Map</span>
+              <span className="status">{centerOnMap ? "Enabled" : "Disabled"}</span>
+            </ViewButton>
+            
+            <ViewButton
+              onClick={() => {
+                setFollowDrone(!followDrone);
+                // If enabling follow drone, disable center on map
+                if (!followDrone) {
+                  setCenterOnMap(false);
+                }
+              }}
+              variant={followDrone ? "contained" : "outlined"}
+              className={followDrone ? "active" : ""}
+              size="small"
+              disabled={centerOnMap}
+            >
+              <span><FiTarget style={{ marginRight: '8px' }} /> Follow Drone</span>
+              <span className="status">{followDrone ? "Enabled" : "Disabled"}</span>
+            </ViewButton>
+          </SectionContent>
+        </ViewControls>
+        
+        <DroneSelector
+          dronePosition={dronePosition}
+          droneRotation={droneRotation}
+          onPositionChange={setDronePosition}
+          onRotationChange={setDroneRotation}
+          onDroneConfigSelected={handleDroneConfigSelected}
+        />
+        
+        <ManualDroneControls 
+          position={dronePosition}
+          rotation={droneRotation}
+          onPositionChange={setDronePosition}
+          onRotationChange={setDroneRotation}
+          performanceSettings={performanceSettings}
+          onPerformanceSettingsChange={handlePerformanceSettingsChange}
+        />
+        
+        {/* Add the AdvancedControlsPanel here */}
+        <AdvancedControlsPanel 
+          performanceSettings={performanceSettings}
+          onPerformanceSettingsChange={handlePerformanceSettingsChange}
+        />
+      </ControlsPanel>
+      
+      <CanvasContainer>
+        <ErrorBoundary 
+          fallback={
+            <div style={{ 
+              width: '100%', 
+              height: '100%', 
+              display: 'flex', 
+              justifyContent: 'center', 
+              alignItems: 'center',
+              backgroundColor: '#1a1a1a',
+              color: 'white',
+              flexDirection: 'column',
+              padding: '20px'
+            }}>
+              <h2 style={{ color: '#ff4444' }}>3D Rendering Error</h2>
+              <p>There was an error rendering the 3D scene or model.</p>
+              <p>This could be due to an unsupported model format or an issue with the 3D context.</p>
+              <button 
+                onClick={() => window.location.reload()}
+                style={{
+                  marginTop: '20px',
+                  padding: '10px 20px',
+                  background: '#4477ff',
+                  border: 'none',
+                  borderRadius: '5px',
+                  color: 'white',
+                  cursor: 'pointer'
+                }}
+              >
+                Reload Page
+              </button>
+            </div>
+          }
+        >
+          <ThreeCanvas
+            dronePosition={dronePosition}
+            droneRotation={droneRotation}
+            showFrustum={showFrustum}
+            cameraDetails={cameraDetails}
+            lensDetails={lensDetails}
+            followDrone={followDrone}
+            centerOnMap={centerOnMap}
+            uploadedFile={importedModel?.url}
+            selectedModel={importedModel}
+            modelVisible={modelVisible}
+            modelScale={modelScale}
+            modelOpacity={modelOpacity}
+            pointSize={pointSize}
+            frustumScale={frustumScale}
+          />
+        </ErrorBoundary>
+      </CanvasContainer>
+    </MissionPlannerContainer>
+  );
+}
+
+export default MissionPlanner; 

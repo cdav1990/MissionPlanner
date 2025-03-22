@@ -1,0 +1,36 @@
+{
+  "drones": [
+    {
+      "id": "1",
+      "brand": "Freefly",
+      "model": "Alta X",
+      "maxPayload": "35",
+      "payloadUnit": "lbs",
+      "modelFile": "/models/Alta X Shell Model.stp",
+      "compatibleCameras": [
+        {
+          "brand": "Phase One",
+          "models": ["XF IQ4", "iXM-100", "iXM-150"]
+        },
+        {
+          "brand": "Sony",
+          "models": ["A7R V", "A7R IV", "A1", "FX3", "FX6"]
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "brand": "Freefly",
+      "model": "Astro",
+      "maxPayload": "15",
+      "payloadUnit": "lbs",
+      "modelFile": "/models/Astro Shell Model.stp",
+      "compatibleCameras": [
+        {
+          "brand": "Sony",
+          "models": ["A7R V", "A7R IV", "A1", "FX3", "FX6"]
+        }
+      ]
+    }
+  ]
+} 

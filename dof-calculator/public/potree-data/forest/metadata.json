@@ -1,0 +1,12 @@
+{
+  "version": "1.8",
+  "name": "forest",
+  "description": "Example forest point cloud (placeholder)",
+  "points": 0,
+  "projection": "+proj=utm +zone=32 +ellps=WGS84 +datum=WGS84 +units=m +no_defs",
+  "scale": [0.001, 0.001, 0.001],
+  "boundingBox": {
+    "min": [-10, -10, -10],
+    "max": [10, 10, 10]
+  }
+}

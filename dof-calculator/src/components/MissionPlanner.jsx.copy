@@ -1,0 +1,1285 @@
+import React, { useState, useEffect, Suspense, useRef, useReducer, useMemo, useCallback } from 'react';
+import { Canvas, useThree, extend } from '@react-three/fiber';
+import { OrbitControls, Html, PerspectiveCamera, Line, Text } from '@react-three/drei';
+import * as THREE from 'three';
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader';
+import { PLYLoader } from 'three/examples/jsm/loaders/PLYLoader'; // Add PLYLoader import
+import { PCDLoader } from 'three/examples/jsm/loaders/PCDLoader';
+// Note: THREE.js doesn't have built-in LAS/LAZ support - would need third-party libraries
+import DroneMissionEnhanced from './DroneMissionEnhanced';
+import MissionPlannerIntegration from './MissionPlannerIntegration';
+import ModelLoader from './ModelLoader';
+import DroneSelector from './DroneSelector';
+import SelectableModel from './SelectableModel';
+import SelectionControls from './SelectionControls';
+import PotreePointCloud from './PotreePointCloud';
+import SimplePointCloud from './SimplePointCloud';
+import styled from 'styled-components';
+import { Button } from '@mui/material';
+import { FiChevronDown, FiChevronUp, FiCamera, FiCrosshair, FiMap, FiTarget, FiBox, FiSettings, FiMaximize, FiZoomIn } from 'react-icons/fi';
+// Import error boundary components
+import { ModelErrorBoundary, CanvasErrorBoundary, ErrorBoundary } from './ErrorBoundaries.jsx';
+// Import SidebarPerformanceControls
+import SidebarPerformanceControls from './SidebarPerformanceControls';
+// Import ThreeCanvas
+import ThreeCanvas from './ThreeCanvas';
+
+// Styled components for model controls to match drone control UI
+const ControlGroup = styled.div`
+  margin-bottom: 15px;
+`;
+
+const ControlLabel = styled.label`
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+  color: #ccc;
+`;
+
+const ControlItem = styled.div`
+  display: grid;
+  grid-template-columns: 75px 1fr 60px;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  width: 100%;
+`;
+
+const RangeInput = styled.input`
+  width: 100%;
+  height: 10px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: linear-gradient(to right, #1a5bb7, #4f88e3);
+  border-radius: 5px;
+  outline: none;
+  z-index: 1;
+  
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: white;
+    cursor: pointer;
+    border: 1px solid #4f88e3;
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.4);
+    z-index: 2;
+  }
+  
+  &::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: white;
+    cursor: pointer;
+    border: 1px solid #4f88e3;
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.4);
+    z-index: 2;
+  }
+  
+  &:focus {
+    outline: none;
+  }
+`;
+
+const NumberInput = styled.input`
+  width: 100%;
+  background-color: #3a3a3a;
+  border: 1px solid #4f88e3;
+  border-radius: 4px;
+  color: white;
+  padding: 5px;
+  text-align: center;
+  font-size: 0.9rem;
+  
+  &:focus {
+    outline: none;
+    border-color: #6fa0ff;
+    box-shadow: 0 0 0 2px rgba(79, 136, 227, 0.3);
+  }
+  
+  /* Remove spinner buttons for number inputs */
+  &::-webkit-inner-spin-button,
+  &::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  
+  /* Firefox */
+  -moz-appearance: textfield;
+`;
+
+const HelpText = styled.div`
+  font-size: 11px;
+  margin-top: 2px;
+  color: #aaa;
+`;
+
+const CheckboxLabel = styled.label`
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #ccc;
+  
+  input {
+    margin-right: 8px;
+  }
+`;
+
+const SliderContainer = styled.div`
+  margin-bottom: 15px;
+`;
+
+const SliderLabel = styled.label`
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+  color: #ccc;
+`;
+
+const SliderInput = styled.input`
+  width: 100%;
+  height: 10px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: linear-gradient(to right, #1a5bb7, #4f88e3);
+  border-radius: 5px;
+  outline: none;
+  z-index: 1;
+  
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: white;
+    cursor: pointer;
+    border: 1px solid #4f88e3;
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.4);
+    z-index: 2;
+  }
+  
+  &::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: white;
+    cursor: pointer;
+    border: 1px solid #4f88e3;
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.4);
+    z-index: 2;
+  }
+  
+  &:focus {
+    outline: none;
+  }
+`;
+
+const SliderValue = styled.span`
+  display: block;
+  text-align: right;
+  font-size: 0.9rem;
+  color: #ccc;
+`;
+
+// Add styled buttons for the view controls
+const ViewButton = styled(Button)`
+  width: 100%;
+  margin-bottom: 8px;
+  text-transform: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  border: 1px solid #4f88e3;
+  
+  &.active {
+    background-color: #1a5bb7;
+    box-shadow: 0 0 8px rgba(79, 136, 227, 0.5);
+  }
+  
+  &:hover {
+    background-color: rgba(79, 136, 227, 0.2);
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    border-color: #555;
+  }
+  
+  .icon {
+    margin-right: 8px;
+  }
+  
+  .status {
+    font-size: 0.8rem;
+    opacity: 0.8;
+    margin-left: auto;
+    padding: 2px 6px;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+  }
+`;
+
+// Add styled section header
+const ViewControlsHeader = styled.div`
+  margin: 0;
+  font-size: 1rem;
+  color: #4f88e3;
+  border-bottom: 1px solid #333;
+  padding: 8px 4px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  user-select: none;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    color: #6fa0ff;
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+  
+  &:not(:first-child) {
+    margin-top: 12px;
+  }
+`;
+
+// Add a styled section content container
+const SectionContent = styled.div`
+  margin: 8px 0;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: ${props => props.isExpanded ? '500px' : '0px'};
+  opacity: ${props => props.isExpanded ? '1' : '0'};
+  padding-left: 4px;
+`;
+
+// Add a styled import button
+const ImportButton = styled(Button)`
+  width: 100%;
+  margin-bottom: 12px;
+  text-transform: none;
+  font-weight: 500;
+  padding: 10px 16px;
+  background-color: rgba(26, 91, 183, 0.2);
+  border: 1px solid #4f88e3;
+  border-radius: 6px;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background-color: rgba(79, 136, 227, 0.4);
+    box-shadow: 0 0 8px rgba(79, 136, 227, 0.5);
+  }
+  
+  svg {
+    margin-right: 8px;
+    font-size: 1.2rem;
+  }
+`;
+
+// Register THREE with React Three Fiber to avoid namespace issues
+extend({ 
+  ...THREE,
+  OBJLoader,
+  PLYLoader,
+  PCDLoader, // Add PCDLoader for point cloud support
+  // Explicitly register core THREE classes that might be used
+  PerspectiveCamera: THREE.PerspectiveCamera,
+  Scene: THREE.Scene,
+  WebGLRenderer: THREE.WebGLRenderer,
+  Mesh: THREE.Mesh,
+  Group: THREE.Group,
+  BoxGeometry: THREE.BoxGeometry, 
+  SphereGeometry: THREE.SphereGeometry, 
+  PlaneGeometry: THREE.PlaneGeometry, 
+  ConeGeometry: THREE.ConeGeometry,
+  MeshStandardMaterial: THREE.MeshStandardMaterial,
+  MeshBasicMaterial: THREE.MeshBasicMaterial,
+  LineBasicMaterial: THREE.LineBasicMaterial,
+  BufferGeometry: THREE.BufferGeometry,
+  Points: THREE.Points,
+  Line: THREE.Line,
+  LineSegments: THREE.LineSegments
+});
+
+// Instead of trying to modify the THREE namespace directly,
+// create a local reference that's accessible to the component
+const localThree = {
+  M3: THREE.Matrix3
+};
+
+// Add debugging to check THREE namespace
+console.log("THREE namespace in MissionPlanner:", {
+  hasMatrix3: !!THREE.Matrix3,
+  matrix3IsFunction: typeof THREE.Matrix3 === 'function',
+  threeObjectKeys: Object.keys(THREE).filter(key => key.startsWith('M'))
+});
+
+// Camera Frustum component to visualize field of view
+function CameraFrustum({ cameraDetails, lensDetails, position = [0, 0, 0], rotation = [0, 0, 0], scale = 1.0 }) {
+  const frustumRef = useRef(null);
+  
+  // Use useEffect to directly update position and rotation for more reliable updates
+  useEffect(() => {
+    if (frustumRef.current) {
+      frustumRef.current.position.set(position[0], position[1], position[2]);
+    }
+  }, [position]);
+  
+  useEffect(() => {
+    if (frustumRef.current) {
+      frustumRef.current.rotation.set(rotation[0], rotation[1], rotation[2]);
+    }
+  }, [rotation]);
+  
+  if (!cameraDetails || !lensDetails) return null;
+
+  // Calculate FOV based on sensor size and focal length
+  const { sensorWidth, sensorHeight } = cameraDetails;
+  const { focalLength } = lensDetails;
+
+  // Calculate horizontal and vertical FOV in radians
+  const horizontalFOV = 2 * Math.atan(sensorWidth / (2 * focalLength));
+  const verticalFOV = 2 * Math.atan(sensorHeight / (2 * focalLength));
+
+  // Calculate dimensions at near and far planes - adjusted to be visible but not overwhelming
+  const nearPlane = 0.5;
+  const farPlane = 30.0 * scale;   // Apply scale to the far plane distance
+  
+  const nearHeight = 2 * Math.tan(verticalFOV / 2) * nearPlane;
+  const nearWidth = 2 * Math.tan(horizontalFOV / 2) * nearPlane;
+  const farHeight = 2 * Math.tan(verticalFOV / 2) * farPlane;
+  const farWidth = 2 * Math.tan(horizontalFOV / 2) * farPlane;
+
+  // Create points for the frustum
+  const points = [
+    // Near plane - clockwise from bottom-left
+    new THREE.Vector3(-nearWidth/2, -nearHeight/2, -nearPlane),
+    new THREE.Vector3(nearWidth/2, -nearHeight/2, -nearPlane),
+    new THREE.Vector3(nearWidth/2, nearHeight/2, -nearPlane),
+    new THREE.Vector3(-nearWidth/2, nearHeight/2, -nearPlane),
+    // Far plane - clockwise from bottom-left
+    new THREE.Vector3(-farWidth/2, -farHeight/2, -farPlane),
+    new THREE.Vector3(farWidth/2, -farHeight/2, -farPlane),
+    new THREE.Vector3(farWidth/2, farHeight/2, -farPlane),
+    new THREE.Vector3(-farWidth/2, farHeight/2, -farPlane),
+  ];
+
+  // Lines to draw frustum edges
+  const indices = [
+    // Near plane
+    0, 1, 1, 2, 2, 3, 3, 0,
+    // Far plane
+    4, 5, 5, 6, 6, 7, 7, 4,
+    // Connecting near to far
+    0, 4, 1, 5, 2, 6, 3, 7
+  ];
+
+  // Create geometry from points and indices
+  const lineGeometry = new THREE.BufferGeometry();
+  const vertices = [];
+  
+  for (let i = 0; i < indices.length; i++) {
+    vertices.push(points[indices[i]].x, points[indices[i]].y, points[indices[i]].z);
+  }
+
+  lineGeometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+
+  // Create material for the frustum with better visibility
+  const lineMaterial = new THREE.LineBasicMaterial({
+    color: 0x00ffff,
+    linewidth: 2,
+    transparent: true,
+    opacity: 0.6 // Slightly more transparent
+  });
+
+  // Add a semi-transparent fill for the field of view
+  const coneGeometry = new THREE.ConeGeometry(
+    farWidth * 0.7, // radius at the far end
+    farPlane, // height of the cone
+    32 // number of segments
+  );
+  
+  // Adjust the cone to match the frustum
+  coneGeometry.rotateX(Math.PI / 2);
+  coneGeometry.translate(0, 0, -farPlane/2);
+  
+  const coneMaterial = new THREE.MeshBasicMaterial({
+    color: 0x00ffff,
+    transparent: true,
+    opacity: 0.1, // Make more transparent
+    side: THREE.DoubleSide
+  });
+
+  // Return modified group with ref
+  return (
+    <group ref={frustumRef} position={position} rotation={rotation}>
+      <lineSegments geometry={lineGeometry} material={lineMaterial} />
+      <mesh geometry={coneGeometry} material={coneMaterial} />
+      {/* Display FOV values as text */}
+      <Html position={[0, 2, -5 * scale]}>
+        <div style={{
+          background: 'rgba(0,0,0,0.7)',
+          color: 'white',
+          padding: '6px',
+          borderRadius: '4px',
+          fontSize: `${Math.max(12, 12 * Math.sqrt(scale))}px`, // Scale the font size with the frustum scale
+          textAlign: 'center',
+          whiteSpace: 'nowrap',
+          boxShadow: '0 0 5px rgba(0,255,255,0.5)'
+        }}>
+          FOV: {Math.round(horizontalFOV * 180 / Math.PI)}° × {Math.round(verticalFOV * 180 / Math.PI)}°
+          <br />
+          {cameraDetails.brand} {cameraDetails.model}
+          <br />
+          {lensDetails.brand} {lensDetails.model}
+          <br />
+          <span style={{ fontSize: '0.8em', opacity: 0.8 }}>Scale: {scale.toFixed(1)}x</span>
+        </div>
+      </Html>
+    </group>
+  );
+}
+
+// Create a Scene component to handle camera and controls setup
+function SceneSetup({ children }) {
+  // Scene setup
+  const { camera, scene, gl } = useThree();
+  
+  // Log WebGL capabilities to help with debugging
+  useEffect(() => {
+    try {
+      console.log("WebGL context created successfully");
+      console.log("WebGL info:", {
+        renderer: gl.getContext(),
+        version: gl.getContext().getParameter(gl.getContext().VERSION),
+        vendor: gl.getContext().getParameter(gl.getContext().VENDOR),
+        maxTextureSize: gl.getContext().getParameter(gl.getContext().MAX_TEXTURE_SIZE),
+      });
+      
+      // Set up scene defaults
+      scene.background = new THREE.Color("#111");
+      scene.fog = new THREE.Fog("#111", 100, 200);
+      
+      // Create a basic ground plane
+      const groundGeometry = new THREE.PlaneGeometry(2000, 2000, 1, 1);
+      const groundMaterial = new THREE.MeshBasicMaterial({ 
+        color: "#222", 
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.6 
+      });
+      const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+      ground.rotation.x = Math.PI / 2;
+      ground.position.y = -0.01; // Slightly below origin to avoid z-fighting
+      ground.receiveShadow = true;
+      ground.name = "GroundPlane";
+      scene.add(ground);
+      
+      // Add default lighting
+      const ambientLight = new THREE.AmbientLight(0x666666);
+      ambientLight.name = "AmbientLight";
+      scene.add(ambientLight);
+      
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+      directionalLight.position.set(50, 50, 50);
+      directionalLight.name = "DirectionalLight";
+      scene.add(directionalLight);
+    } catch (err) {
+      console.error("Error setting up 3D scene:", err);
+    }
+    
+    // Clean up function
+    return () => {
+      try {
+        // Properly dispose of scene objects when component unmounts
+        const ground = scene.getObjectByName("GroundPlane");
+        const ambientLight = scene.getObjectByName("AmbientLight");
+        const directionalLight = scene.getObjectByName("DirectionalLight");
+        
+        if (ground) {
+          scene.remove(ground);
+          ground.geometry.dispose();
+          ground.material.dispose();
+        }
+        
+        if (ambientLight) scene.remove(ambientLight);
+        if (directionalLight) scene.remove(directionalLight);
+      } catch (err) {
+        console.error("Error cleaning up scene:", err);
+      }
+    };
+  }, [scene, gl]);
+  
+  return children;
+}
+
+// A simplified version of DroneMissionWrapper that works as a fallback
+const SimpleMissionPlanner = ({ cameraDetails, lensDetails }) => {
+  const { scene } = useThree();
+  
+  // Log scene information
+  useEffect(() => {
+    if (scene) {
+      console.log("SimpleMissionPlanner scene:", {
+        isThreeScene: scene instanceof THREE.Scene,
+        childCount: scene.children?.length
+      });
+    }
+  }, [scene]);
+  
+  // Return a simple placeholder that shows we're in fallback mode
+  return (
+    <group>
+      <Html position={[0, 2, 0]}>
+        <div style={{ 
+          background: 'rgba(0,0,0,0.7)', 
+          color: 'white', 
+          padding: '10px',
+          borderRadius: '5px',
+          maxWidth: '250px',
+          textAlign: 'center',
+          pointerEvents: 'none'
+        }}>
+          <div style={{ marginBottom: '10px', fontWeight: 'bold' }}>
+            Mission Planning Active
+          </div>
+          <div style={{ fontSize: '13px' }}>
+            {cameraDetails ? `Using ${cameraDetails.brand} ${cameraDetails.model}` : 'No camera selected'}
+            <br />
+            {lensDetails ? `${lensDetails.focalLength}mm lens` : 'No lens selected'}
+          </div>
+        </div>
+      </Html>
+      
+      {/* Basic grid for reference */}
+      <gridHelper args={[100, 25]} position={[0, 0.01, 0]} />
+      
+      {/* Simple trajectory visualization */}
+      <mesh position={[0, 0.5, 0]}>
+        <sphereGeometry args={[0.2, 16, 16]} />
+        <meshBasicMaterial color="yellow" />
+      </mesh>
+    </group>
+  );
+};
+
+// Update the ManualDroneControls component
+function ManualDroneControls({ position, rotation, onPositionChange, onRotationChange }) {
+  const handlePositionChange = (axis, value) => {
+    if (!onPositionChange) return;
+    
+    // Parse the value and ensure it's a number
+    let numValue = parseFloat(value);
+    
+    // Handle invalid input
+    if (isNaN(numValue)) {
+      numValue = position[axis]; // Keep current value if invalid
+    }
+    
+    // Define min/max values based on axis
+    let min, max;
+    switch(axis) {
+      case 1: // Y axis (height)
+        min = 0;
+        max = 20;
+        break;
+      default: // X and Z axes (horizontal)
+        min = -20;
+        max = 20;
+        break;
+    }
+    
+    // Clamp to min/max values
+    numValue = Math.min(Math.max(numValue, min), max);
+    
+    // Create a new position array to avoid reference issues
+    const newPosition = [...position];
+    newPosition[axis] = numValue;
+    
+    // Call the parent component's handler with the new position
+    onPositionChange(newPosition);
+  };
+
+  const handleRotationChange = (axis, value) => {
+    if (!onRotationChange) return;
+    
+    // Parse the value and ensure it's a number
+    let numValue = parseFloat(value);
+    
+    // Handle invalid input
+    if (isNaN(numValue)) {
+      numValue = THREE.MathUtils.radToDeg(rotation[axis]); // Get current value in degrees
+    }
+    
+    // Clamp to valid rotation values (-180 to 180 degrees)
+    numValue = Math.min(Math.max(numValue, -180), 180);
+    
+    // Convert degrees to radians
+    const radValue = THREE.MathUtils.degToRad(numValue);
+    
+    // Create a new rotation array to avoid reference issues
+    const newRotation = [...rotation];
+    newRotation[axis] = radValue;
+    
+    // Call the parent component's handler with the new rotation
+    onRotationChange(newRotation);
+  };
+
+  return (
+    <div className="manual-drone-controls">
+      <div className="control-group">
+        <label>Position</label>
+        <div className="control-row">
+          <div className="control-item">
+            <label>X: (Left/Right)</label>
+            <input 
+              type="range" 
+              min="-20" 
+              max="20" 
+              step="0.1" 
+              value={position[0]} 
+              onChange={(e) => handlePositionChange(0, e.target.value)}
+            />
+            <input 
+              type="number" 
+              value={position[0].toFixed(1)} 
+              step="0.1"
+              onChange={(e) => handlePositionChange(0, e.target.value)}
+              style={{ width: '60px' }} 
+            />
+          </div>
+          <div className="control-item">
+            <label>Y: (Up/Down)</label>
+            <input 
+              type="range" 
+              min="0" 
+              max="20" 
+              step="0.1" 
+              value={position[1]} 
+              onChange={(e) => handlePositionChange(1, e.target.value)}
+            />
+            <input 
+              type="number" 
+              value={position[1].toFixed(1)} 
+              step="0.1"
+              onChange={(e) => handlePositionChange(1, e.target.value)}
+              style={{ width: '60px' }} 
+            />
+          </div>
+          <div className="control-item">
+            <label>Z: (Forward/Back)</label>
+            <input 
+              type="range" 
+              min="-20" 
+              max="20" 
+              step="0.1" 
+              value={position[2]} 
+              onChange={(e) => handlePositionChange(2, e.target.value)}
+            />
+            <input 
+              type="number" 
+              value={position[2].toFixed(1)} 
+              step="0.1"
+              onChange={(e) => handlePositionChange(2, e.target.value)}
+              style={{ width: '60px' }} 
+            />
+          </div>
+        </div>
+      </div>
+      <div className="control-group">
+        <label>Rotation (degrees)</label>
+        <div className="control-row">
+          <div className="control-item">
+            <label>X:</label>
+            <input 
+              type="range" 
+              min="-180" 
+              max="180" 
+              step="1" 
+              value={THREE.MathUtils.radToDeg(rotation[0])} 
+              onChange={(e) => handleRotationChange(0, e.target.value)}
+            />
+            <input 
+              type="number" 
+              value={THREE.MathUtils.radToDeg(rotation[0]).toFixed(0)} 
+              step="1"
+              onChange={(e) => handleRotationChange(0, e.target.value)}
+              style={{ width: '60px' }} 
+            />
+          </div>
+          <div className="control-item">
+            <label>Y:</label>
+            <input 
+              type="range" 
+              min="-180" 
+              max="180" 
+              step="1" 
+              value={THREE.MathUtils.radToDeg(rotation[1])} 
+              onChange={(e) => handleRotationChange(1, e.target.value)}
+            />
+            <input 
+              type="number" 
+              value={THREE.MathUtils.radToDeg(rotation[1]).toFixed(0)} 
+              step="1"
+              onChange={(e) => handleRotationChange(1, e.target.value)}
+              style={{ width: '60px' }} 
+            />
+          </div>
+          <div className="control-item">
+            <label>Z:</label>
+            <input 
+              type="range" 
+              min="-180" 
+              max="180" 
+              step="1" 
+              value={THREE.MathUtils.radToDeg(rotation[2])} 
+              onChange={(e) => handleRotationChange(2, e.target.value)}
+            />
+            <input 
+              type="number" 
+              value={THREE.MathUtils.radToDeg(rotation[2]).toFixed(0)} 
+              step="1"
+              onChange={(e) => handleRotationChange(2, e.target.value)}
+              style={{ width: '60px' }} 
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Simple drone model representation as a colored box
+function DroneModel({ position, rotation, scale = 1 }) {
+  return (
+    <mesh position={position} rotation={rotation ? rotation.map(r => THREE.MathUtils.degToRad(r)) : [0, 0, 0]} castShadow>
+      <boxGeometry args={[1 * scale, 0.3 * scale, 1 * scale]} />
+      <meshStandardMaterial color="#3498db" />
+    </mesh>
+  );
+}
+
+// Reducer for drone state
+function droneStateReducer(state, action) {
+  switch (action.type) {
+    case 'UPDATE_POSITION':
+      // Create a completely new position array to ensure React detects the state change
+      return { 
+        ...state, 
+        position: action.payload 
+      };
+    case 'UPDATE_ROTATION':
+      // Create a completely new rotation array to ensure React detects the state change
+      return { 
+        ...state, 
+        rotation: action.payload 
+      };
+    case 'UPDATE_POSITION_AXIS':
+      // Update a single axis of position
+      const newPosition = [...state.position];
+      newPosition[action.payload.axis] = action.payload.value;
+      return {
+        ...state,
+        position: newPosition
+      };
+    case 'UPDATE_ROTATION_AXIS':
+      // Update a single axis of rotation
+      const newRotation = [...state.rotation];
+      newRotation[action.payload.axis] = action.payload.value;
+      return {
+        ...state,
+        rotation: newRotation
+      };
+    default:
+      return state;
+  }
+}
+
+// Add a customized camera control component that preserves state when following the drone
+function CameraControls({ dronePosition, followDrone, centerOnMap, cameraOffset = [5, 5, 5], moveCamera = true }) {
+  const camera = useThree((state) => state.camera);
+  const controls = useRef(null);
+  const prevPositionRef = useRef(dronePosition);
+  const mapCenterPosition = [0, 0, 0];
+  
+  // Keep track of initial camera position and target for smooth transitions
+  const initialPositionRef = useRef(null);
+  const initialTargetRef = useRef(null);
+  const isInitializedRef = useRef(false);
+  
+  // Store camera offset for position calculations
+  const offset = useMemo(() => {
+    return new THREE.Vector3(...cameraOffset);
+  }, [cameraOffset]);
+
+  // Initialize camera controls on first render
+  useEffect(() => {
+    if (controls.current && !isInitializedRef.current) {
+      initialPositionRef.current = camera.position.clone();
+      initialTargetRef.current = controls.current.target.clone();
+      isInitializedRef.current = true;
+      console.log("Camera controls initialized");
+    }
+  }, [camera]);
+
+  // Update camera target based on the selected mode
+  useEffect(() => {
+    try {
+      if (!controls.current || !isInitializedRef.current) return;
+      
+      // Position to focus on
+      let targetPosition;
+      
+      if (followDrone) {
+        // Follow the drone
+        targetPosition = new THREE.Vector3(...dronePosition);
+      } else if (centerOnMap) {
+        // Center on map
+        targetPosition = new THREE.Vector3(...mapCenterPosition);
+      } else {
+        // Free mode - do nothing
+        return;
+      }
+      
+      // Update the orbit controls target
+      if (moveCamera) {
+        controls.current.target.copy(targetPosition);
+        
+        // If following drone, adjust camera position to maintain relative position
+        if (followDrone) {
+          const pos = prevPositionRef.current;
+          const delta = [
+            dronePosition[0] - pos[0],
+            dronePosition[1] - pos[1],
+            dronePosition[2] - pos[2]
+          ];
+          
+          camera.position.x += delta[0];
+          camera.position.y += delta[1];
+          camera.position.z += delta[2];
+        }
+      }
+      
+      prevPositionRef.current = dronePosition;
+    } catch (err) {
+      console.error("Error updating camera target:", err);
+    }
+  }, [dronePosition, followDrone, centerOnMap, moveCamera, camera]);
+
+  return (
+    <OrbitControls
+      ref={controls}
+      enableDamping={true}
+      dampingFactor={0.1}
+      rotateSpeed={0.7}
+      minDistance={1}
+      maxDistance={200}
+    />
+  );
+}
+
+// Create a Model component that can handle different 3D model types
+const Model = ({ modelPath, modelType, scale = 1, opacity = 1, position = [0, 0, 0], rotation = [0, 0, 0] }) => {
+  const [error, setError] = useState(null);
+  const modelRef = useRef();
+  const [geometry, setGeometry] = useState(null);
+  const [materials, setMaterials] = useState([]);
+  
+  // Model loading logic
+  useEffect(() => {
+    if (!modelPath) return;
+    
+    // Clean up previous model resources
+    return () => {
+      if (geometry) {
+        geometry.dispose();
+      }
+      materials.forEach(material => {
+        if (material.map) material.map.dispose();
+        material.dispose();
+      });
+    };
+  }, [modelPath, geometry, materials]);
+  
+  // Handle OBJ model loading
+  const handleLoad = useCallback((object) => {
+    try {
+      console.log("Model loaded successfully:", object);
+      
+      // Store geometries and materials for later cleanup
+      const geoms = [];
+      const mats = [];
+      
+      object.traverse(child => {
+        if (child.isMesh) {
+          geoms.push(child.geometry);
+          if (Array.isArray(child.material)) {
+            child.material.forEach(m => mats.push(m));
+          } else {
+            mats.push(child.material);
+          }
+          
+          // Set opacity if needed
+          if (opacity < 1) {
+            if (Array.isArray(child.material)) {
+              child.material.forEach(m => {
+                m.transparent = true;
+                m.opacity = opacity;
+              });
+            } else {
+              child.material.transparent = true;
+              child.material.opacity = opacity;
+            }
+          }
+          
+          // Enable shadows
+          child.castShadow = true;
+          child.receiveShadow = true;
+        }
+      });
+      
+      // Store refs for cleanup
+      if (geoms.length > 0) setGeometry(geoms[0]);
+      if (mats.length > 0) setMaterials(mats);
+      
+    } catch (err) {
+      console.error("Error processing loaded model:", err);
+      setError(`Error processing model: ${err.message}`);
+    }
+  }, [opacity]);
+  
+  // Handle loading error
+  const handleError = useCallback((err) => {
+    console.error("Error loading model:", err);
+    setError(`Failed to load model: ${err.message || "Unknown error"}`);
+  }, []);
+  
+  // If error occurred, show error message
+  if (error) {
+    return (
+      <mesh position={position}>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshBasicMaterial color="red" wireframe />
+        <Html center>
+          <div style={{ 
+            background: 'rgba(255,0,0,0.8)', 
+            color: 'white',
+            padding: '10px',
+            borderRadius: '5px',
+            maxWidth: '200px',
+            textAlign: 'center'
+          }}>
+            {error}
+          </div>
+        </Html>
+      </mesh>
+    );
+  }
+  
+  return (
+    <group ref={modelRef} position={position} rotation={rotation} scale={[scale, scale, scale]}>
+      {modelType === 'obj' && (
+        <Suspense fallback={<mesh><boxGeometry args={[1, 1, 1]} /><meshBasicMaterial color="#4488ff" wireframe /></mesh>}>
+          <OBJLoader 
+            url={modelPath}
+            onLoad={handleLoad}
+            onError={handleError}
+          />
+        </Suspense>
+      )}
+      {modelType === 'ply' && (
+        <Suspense fallback={<mesh><boxGeometry args={[1, 1, 1]} /><meshBasicMaterial color="#4488ff" wireframe /></mesh>}>
+          <PLYLoader 
+            url={modelPath}
+            onLoad={handleLoad}
+            onError={handleError}
+          />
+        </Suspense>
+      )}
+    </group>
+  );
+};
+
+// Styled components for the MissionPlanner layout
+const MissionPlannerContainer = styled.div`
+  display: flex;
+  width: 100%;
+  height: 100%;
+  background-color: #1a1a1a;
+  color: white;
+`;
+
+const ControlsPanel = styled.div`
+  width: 320px;
+  padding: 20px;
+  background-color: rgba(0, 0, 0, 0.7);
+  border-right: 1px solid #333;
+  overflow-y: auto;
+  z-index: 10;
+`;
+
+const FileControls = styled.div`
+  margin-bottom: 20px;
+`;
+
+const ModelControls = styled.div`
+  margin-top: 20px;
+  padding: 15px;
+  background-color: rgba(0, 0, 0, 0.5);
+  border-radius: 8px;
+`;
+
+const ViewControls = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0;  /* Reduced gap between sections */
+  margin-bottom: 16px;
+  background-color: rgba(10, 10, 10, 0.3);
+  border-radius: 6px;
+  padding: 12px;
+  border: 1px solid #333;
+`;
+
+const CanvasContainer = styled.div`
+  flex: 1;
+  position: relative;
+`;
+
+// Point Cloud component for LiDAR data
+const PointCloud = ({ url, scale = 1, opacity = 1, pointSize = 0.01, position = [0, 0, 0] }) => {
+  const [points, setPoints] = useState(null);
+  const [error, setError] = useState(null);
+  const pointsRef = useRef();
+  
+  useEffect(() => {
+    if (!url) return;
+    
+    setError(null);
+    
+    const fileExtension = url.split('.').pop().toLowerCase();
+    let loader;
+    
+    try {
+      // Select the appropriate loader based on file extension
+      if (fileExtension === 'pcd') {
+        loader = new PCDLoader();
+      } else if (['las', 'laz'].includes(fileExtension)) {
+        // This is a placeholder - THREE.js doesn't have a built-in LASLoader
+        // In a real implementation, you would need to add a library like potree or laspy
+        console.warn('LAS/LAZ file support requires additional libraries');
+        setError('LAS/LAZ file support is not fully implemented');
+        return;
+      } else if (fileExtension === 'pcap') {
+        // PCAP processing typically requires server-side processing
+        console.warn('PCAP file processing typically requires server-side conversion');
+        setError('PCAP file processing is not implemented in the browser');
+        return;
+      } else {
+        setError(`Unsupported point cloud format: ${fileExtension}`);
+        return;
+      }
+      
+      loader.load(url, (pointcloud) => {
+        console.log('Point cloud loaded:', pointcloud);
+        
+        // Check if the point cloud has valid data
+        if (!pointcloud.geometry || !pointcloud.geometry.attributes.position) {
+          setError('Point cloud has no valid geometry data');
+          return;
+        }
+        
+        const totalPoints = pointcloud.geometry.attributes.position.count;
+        console.log(`Total points: ${totalPoints}`);
+        
+        if (totalPoints === 0) {
+          setError('Point cloud contains no points');
+          return;
+        }
+        
+        setPoints(pointcloud);
+      }, 
+      (progress) => {
+        console.log(`Loading progress: ${Math.round((progress.loaded / progress.total) * 100)}%`);
+      },
+      (error) => {
+        console.error('Error loading point cloud:', error);
+        setError(`Error loading point cloud: ${error.message}`);
+      });
+    } catch (err) {
+      console.error('Exception loading point cloud:', err);
+      setError(`Exception loading point cloud: ${err.message}`);
+    }
+    
+    return () => {
+      // Cleanup
+      if (points) {
+        if (points.geometry) points.geometry.dispose();
+        if (points.material) points.material.dispose();
+      }
+    };
+  }, [url]);
+  
+  useEffect(() => {
+    if (pointsRef.current && points) {
+      // Update point size and scale
+      pointsRef.current.scale.set(scale, scale, scale);
+      
+      if (pointsRef.current.material) {
+        pointsRef.current.material.size = pointSize;
+        pointsRef.current.material.opacity = opacity;
+        pointsRef.current.material.transparent = opacity < 1;
+      }
+    }
+  }, [scale, opacity, pointSize, points]);
+  
+  if (error) {
+    return (
+      <Text position={[0, 1, 0]} color="red" fontSize={0.2} anchorX="center" anchorY="middle">
+        {error}
+      </Text>
+    );
+  }
+  
+  return points ? (
+    <primitive 
+      ref={pointsRef}
+      object={points} 
+      position={position}
+      dispose={null}
+    />
+  ) : (
+    <mesh position={position}>
+      <sphereGeometry args={[0.2, 16, 16]} />
+      <meshBasicMaterial color="#4f88e3" wireframe />
+    </mesh>
+  );
+};
+
+// Enhanced Mission Planner with OBJ, PLY and PCAP import
+function MissionPlanner({ initialCameraDetails, initialLensDetails, initialDofCalculations }) {
+  console.log("MissionPlanner rendering", { initialCameraDetails, initialLensDetails, initialDofCalculations });
+  
+  // Basic state for mission planning
+  const [waypoints, setWaypoints] = useState([
+    [0, 0, 0],
+    [2, 1, 2],
+    [4, 2, 0],
+    [2, 1, -2]
+  ]);
+  
+  // Add a ref to store the current model data
+  const modelDataRef = useRef(null);
+  
+  // Add performance settings state
+  const [performanceSettings, setPerformanceSettings] = useState({
+    lowPowerMode: false,
+    prioritizePerformance: true,
+    adaptiveQuality: true,
+    pointSize: 0.01,
+    maxPointsPerModel: 2000000,
+    isM3: false,
+    isAppleSilicon: false
+  });
+  
+  // Add state for performance monitoring
+  const [memoryUsage, setMemoryUsage] = useState(null);
+  const [fpsValue, setFpsValue] = useState(60);
+  const [gpuInfo, setGpuInfo] = useState(null);
+  
+  // Performance monitoring callbacks
+  const handleMemoryUsageChange = useCallback((usage) => {
+    setMemoryUsage(usage);
+  }, []);
+  
+  const handleFpsChange = useCallback((fps) => {
+    setFpsValue(fps);
+  }, []);
+  
+  const handleGpuInfoUpdate = useCallback((info) => {
+    setGpuInfo(info);
+    // Update performance settings with hardware info
+    setPerformanceSettings(prev => ({
+      ...prev,
+      isM3: info.isM3,
+      isAppleSilicon: info.isAppleSilicon,
+      // Adjust points for hardware capability
+      maxPointsPerModel: info.isM3 ? 4000000 : (info.isAppleSilicon ? 2000000 : 1000000)
+    }));
+  }, []);
+  
+  // Handle performance settings changes
+  const handlePerformanceSettingsChange = useCallback((newSettings) => {
+    console.log('Performance settings updated:', newSettings);
+    setPerformanceSettings(newSettings);
+  }, []);
+  
+  // Menu collapse state
+  const [isMenuCollapsed, setIsMenuCollapsed] = useState(false);
+  
+  // Other state variables...
+  
+  // ... existing code ...
+  
+  // In the return JSX, add the SidebarPerformanceControls component:
+  return (
+    <div className="mission-planner">
+      {/* Left sidebar */}
+      <div className={`mission-sidebar ${isMenuCollapsed ? 'collapsed' : ''}`}>
+        {/* ... existing sidebar content ... */}
+        
+        {/* Add performance controls section */}
+        <SidebarPerformanceControls
+          settings={performanceSettings}
+          onSettingsChange={handlePerformanceSettingsChange}
+          memoryUsage={memoryUsage}
+          fps={fpsValue}
+          gpuInfo={gpuInfo}
+        />
+        
+        {/* ... existing sidebar content ... */}
+      </div>
+      
+      {/* Canvas container */}
+      <div className="canvas-container">
+        <ThreeCanvas
+          dronePosition={dronePosition}
+          droneRotation={droneRotation}
+          showFrustum={showFrustum}
+          cameraDetails={cameraDetails}
+          lensDetails={lensDetails}
+          followDrone={followDrone}
+          centerOnMap={centerOnMap}
+          uploadedFile={uploadedFile}
+          selectedModel={importedModel}
+          modelVisible={modelVisible}
+          modelScale={modelScale}
+          modelOpacity={modelOpacity}
+          pointSize={performanceSettings.pointSize}
+          frustumScale={frustumScale}
+          performanceSettings={performanceSettings}
+          onMemoryUsageChange={handleMemoryUsageChange}
+          onFpsChange={handleFpsChange}
+          onGpuInfoUpdate={handleGpuInfoUpdate}
+        />
+      </div>
+      
+      {/* ... existing UI elements ... */}
+    </div>
+  );
+}
+
+export default MissionPlanner; 

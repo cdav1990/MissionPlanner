@@ -1,0 +1,599 @@
+/* Drone Mission Planner Styles */
+
+/* Utility Classes */
+.mb-10 {
+  margin-bottom: 10px;
+}
+
+.mt-10 {
+  margin-top: 10px;
+}
+
+.mb-20 {
+  margin-bottom: 20px;
+}
+
+.p-10 {
+  padding: 10px;
+}
+
+.flex {
+  display: flex;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.w-full {
+  width: 100%;
+}
+
+/* Selection Highlighting */
+.selected-face {
+  outline: 2px solid #4f88e3;
+  outline-offset: 2px;
+}
+
+.hovered-face {
+  outline: 1px dashed #4f88e3;
+  outline-offset: 1px;
+}
+
+/* Mission Stats Panel */
+.mission-stats-panel {
+  background-color: rgba(30, 30, 30, 0.85);
+  color: white;
+  border-radius: 8px;
+  padding: 15px;
+  margin-top: 10px;
+  border: 1px solid #444;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid #444;
+  padding: 8px 0;
+}
+
+.stat-label {
+  color: #ccc;
+  font-size: 0.9rem;
+}
+
+.stat-value {
+  font-weight: 500;
+  color: white;
+}
+
+/* Mission Path Visualization */
+.waypoint-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #4f88e3;
+  position: absolute;
+  transform: translate(-50%, -50%);
+}
+
+.waypoint-dot.active {
+  background-color: #ff5722;
+  width: 12px;
+  height: 12px;
+  box-shadow: 0 0 10px rgba(255, 87, 34, 0.7);
+}
+
+.path-line {
+  height: 2px;
+  background-color: #4f88e3;
+  position: absolute;
+  transform-origin: left center;
+}
+
+/* Flight Parameters Form */
+.flight-params-form {
+  background-color: rgba(30, 30, 30, 0.9);
+  border-radius: 8px;
+  padding: 15px;
+  margin-top: 15px;
+}
+
+.form-row {
+  margin-bottom: 15px;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 0.9rem;
+  color: #ccc;
+}
+
+.form-input {
+  width: 100%;
+  padding: 8px;
+  border-radius: 4px;
+  background-color: #333;
+  border: 1px solid #444;
+  color: white;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #4f88e3;
+}
+
+/* Workflow Steps Indicator */
+.workflow-steps {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.workflow-step {
+  flex: 1;
+  text-align: center;
+  position: relative;
+  z-index: 2;
+}
+
+.step-number {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: #333;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 8px;
+  border: 2px solid #444;
+  font-weight: bold;
+}
+
+.step-number.active {
+  background-color: #4f88e3;
+  border-color: #4f88e3;
+}
+
+.step-number.completed {
+  background-color: #4caf50;
+  border-color: #4caf50;
+}
+
+.step-label {
+  font-size: 0.8rem;
+  color: #ccc;
+}
+
+.step-label.active {
+  color: white;
+  font-weight: 500;
+}
+
+.workflow-progress-bar {
+  position: absolute;
+  top: 15px;
+  left: 0;
+  height: 2px;
+  background-color: #444;
+  width: 100%;
+  z-index: 1;
+}
+
+.workflow-progress-indicator {
+  height: 100%;
+  background-color: #4f88e3;
+  transition: width 0.3s ease;
+}
+
+/* Camera Footprint Visualization */
+.camera-footprint {
+  border: 1px solid #ffcc00;
+  position: absolute;
+  background-color: rgba(255, 204, 0, 0.1);
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Export Options */
+.export-options {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+}
+
+.export-button {
+  flex: 1;
+  padding: 10px;
+  background-color: #333;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.export-button:hover {
+  background-color: #444;
+}
+
+.export-button.kml {
+  background-color: #4285f4;
+}
+
+.export-button.kml:hover {
+  background-color: #3367d6;
+}
+
+.export-button.mavlink {
+  background-color: #db4437;
+}
+
+.export-button.mavlink:hover {
+  background-color: #c53929;
+}
+
+/* Helper classes */
+.text-primary {
+  color: #4f88e3;
+}
+
+.text-success {
+  color: #4caf50;
+}
+
+.text-warning {
+  color: #ff9800;
+}
+
+.text-danger {
+  color: #f44336;
+}
+
+.text-small {
+  font-size: 0.85rem;
+}
+
+.rounded {
+  border-radius: 4px;
+}
+
+.shadow {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.bg-dark {
+  background-color: rgba(30, 30, 30, 0.85);
+}
+
+/* Info box */
+.info-box {
+  background-color: rgba(79, 136, 227, 0.1);
+  border-left: 3px solid #4f88e3;
+  padding: 10px;
+  margin-bottom: 15px;
+  font-size: 0.9rem;
+}
+
+.info-box.warning {
+  background-color: rgba(255, 152, 0, 0.1);
+  border-left-color: #ff9800;
+}
+
+.info-box.success {
+  background-color: rgba(76, 175, 80, 0.1);
+  border-left-color: #4caf50;
+}
+
+/* Object selection mode indicator */
+.selection-mode-indicator {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background-color: rgba(30, 30, 30, 0.9);
+  color: white;
+  padding: 8px 15px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.selection-mode-indicator .icon {
+  width: 16px;
+  height: 16px;
+  background-color: #4f88e3;
+  border-radius: 50%;
+}
+
+/* Add styling for the mission planner sidebar */
+.mission-planner-container {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 300px;
+  height: 100%;
+  background-color: rgba(30, 30, 30, 0.9);
+  color: white;
+  padding: 20px;
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.5);
+  transition: transform 0.3s ease;
+  z-index: 100;
+  overflow-y: auto;
+}
+
+.mission-planner-container.closed {
+  transform: translateX(100%);
+}
+
+/* Popup container for the workflow */
+.popup-container {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 500px;
+  max-width: 90vw;
+  background-color: rgba(30, 30, 30, 0.95);
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  padding: 20px;
+  color: white;
+}
+
+/* Button group for workflow navigation */
+.button-group {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.button-group button {
+  padding: 8px 16px;
+  background-color: #333;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.button-group button:hover {
+  background-color: #444;
+}
+
+.button-group button:last-child {
+  background-color: #4f88e3;
+}
+
+.button-group button:last-child:hover {
+  background-color: #3b6fc7;
+}
+
+/* Form group styling */
+.form-group {
+  margin-bottom: 15px;
+}
+
+.label {
+  display: block;
+  margin-bottom: 5px;
+  color: #ccc;
+}
+
+/* Info box styling */
+.info-box {
+  background-color: rgba(79, 136, 227, 0.1);
+  border: 1px solid rgba(79, 136, 227, 0.3);
+  padding: 10px;
+  border-radius: 4px;
+  margin: 15px 0;
+  font-size: 0.9rem;
+  color: #ccc;
+}
+
+/* Section title styling */
+.section-title {
+  color: white;
+  font-size: 1.1rem;
+  margin-bottom: 10px;
+  font-weight: 500;
+  border-bottom: 1px solid #444;
+  padding-bottom: 5px;
+}
+
+/* Playback controls styling */
+.playback-controls {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(30, 30, 30, 0.8);
+  border-radius: 8px;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 1000;
+  color: white;
+  border: 1px solid #444;
+}
+
+.playback-controls button {
+  background-color: #333;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.playback-controls button:hover {
+  background-color: #444;
+}
+
+.playback-controls button.active {
+  background-color: #4f88e3;
+}
+
+.playback-controls button.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.progress-bar {
+  background-color: #333;
+  height: 8px;
+  width: 150px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar > div {
+  height: 100%;
+  background-color: #4f88e3;
+}
+
+.mission-stats {
+  color: #ccc;
+  font-size: 0.9rem;
+  min-width: 80px;
+}
+
+/* Manual Drone Controls Styling */
+.manual-drone-controls {
+  background-color: transparent;
+  border-radius: 0;
+  padding: 10px 5px;
+  margin-top: 5px;
+  border: none;
+}
+
+.control-group {
+  margin-bottom: 15px;
+}
+
+.control-group > label {
+  display: block;
+  margin-bottom: 5px;
+  color: #ccc;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.control-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 5px;
+}
+
+.control-item {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.control-item label {
+  display: inline-block;
+  width: 20px;
+  color: #aaa;
+  font-size: 12px;
+}
+
+.control-item input[type="range"] {
+  flex: 1;
+  margin: 0 8px;
+  background-color: #333;
+}
+
+.control-item input[type="number"] {
+  width: 60px;
+  background-color: #333;
+  border: 1px solid #444;
+  color: white;
+  padding: 3px 5px;
+  border-radius: 3px;
+}
+
+/* Collapsible section styling */
+.collapsible-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  padding: 8px 5px;
+  border-bottom: 1px solid #333;
+  user-select: none;
+}
+
+.collapsible-header:hover {
+  background-color: rgba(50, 50, 50, 0.3);
+}
+
+.collapsible-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #4f88e3;
+}
+
+.collapsible-content {
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.collapsible-arrow {
+  transition: transform 0.3s ease;
+}
+
+.collapsible-arrow.open {
+  transform: rotate(180deg);
+}
+
+.mission-planner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.mission-planner-controls {
+  padding: 15px;
+  background-color: #232323;
+  border-bottom: 1px solid #333;
+}
+
+.control-section {
+  margin-bottom: 15px;
+}
+
+.control-section label {
+  margin-right: 15px;
+  display: inline-flex;
+  align-items: center;
+  color: #ccc;
+}
+
+.control-section input[type="checkbox"] {
+  margin-right: 5px;
+}
+
+/* Make the 3D canvas fill all available space */
+.mission-planner canvas {
+  height: calc(100vh - 120px) !important;
+  min-height: 500px;
+} 

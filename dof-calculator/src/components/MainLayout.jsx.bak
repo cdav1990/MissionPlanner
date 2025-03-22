@@ -1,0 +1,2815 @@
+import React, { useState, useRef, useEffect, Suspense, useCallback } from 'react';
+import { Canvas, useFrame, useThree, useLoader } from '@react-three/fiber';
+import { OrbitControls, PerspectiveCamera, Grid as DreiGrid, Environment, useBounds, Stats, AdaptiveDpr, AdaptiveEvents, Loader, useHelper, GizmoHelper, GizmoViewport, Plane, Line, Html, Text } from '@react-three/drei';
+import { EffectComposer, SSAO, Bloom, DepthOfField, Outline } from '@react-three/postprocessing';
+import { Perf } from 'r3f-perf';
+import styled from 'styled-components';
+import { motion, AnimatePresence } from 'framer-motion';
+import DOFCalculator from './DOFCalculator'; // Import the original DOFCalculator component
+import * as THREE from 'three';
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader';
+import { PLYLoader } from 'three/examples/jsm/loaders/PLYLoader';
+
+// Define CSS variables 
+const StyledVars = styled.div`
+  --bg-light: #232323;
+  --bg-medium: #1e1e1e;
+  --text-light: #ffffff;
+  --text-dim: #a0a0a0;
+  --border-color: #333333;
+  --highlight-color: #2c2c2c;
+  --accent-color: #4f88e3;
+  --border-radius: 8px;
+  --border-radius-sm: 4px;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+`;
+
+// Styled components for layout
+const LayoutContainer = styled.div`
+  display: flex;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+`;
+
+const TabBar = styled.div`
+  display: flex;
+  width: 100%;
+  background-color: #131313;
+  height: 50px;
+  align-items: center;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--border-color);
+`;
+
+const TabButton = styled(motion.button)`
+  background-color: ${props => props.active ? 'var(--highlight-color)' : 'transparent'};
+  color: ${props => props.active ? 'var(--accent-color)' : 'var(--text-dim)'};
+  border: none;
+  padding: 0 20px;
+  height: 100%;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: ${props => props.active ? 'bold' : 'normal'};
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background-color: var(--accent-color);
+    transform: scaleX(${props => props.active ? 1 : 0});
+    transition: transform 0.2s ease;
+  }
+`;
+
+const ContentContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: calc(100% - 50px);
+  overflow: hidden;
+`;
+
+const MenuPane = styled(motion.div)`
+  width: 30%;
+  height: 100%;
+  background-color: #1a1a1a;
+  color: white;
+  padding: 20px;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+  overflow-y: auto;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+`;
+
+const ViewerContainer = styled(motion.div)`
+  width: 70%;
+  height: 100%;
+  background-color: #2a2a2a;
+  position: relative;
+  overflow: hidden;
+`;
+
+const MenuSection = styled.div`
+  background-color: var(--bg-light);
+  border-radius: var(--border-radius);
+  padding: 15px;
+  border: 1px solid var(--border-color);
+  margin-bottom: 15px;
+`;
+
+const MenuTitle = styled.h2`
+  color: var(--text-light);
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-color);
+`;
+
+const MenuItem = styled(motion.button)`
+  width: 100%;
+  padding: 10px;
+  margin: 5px 0;
+  background-color: var(--bg-medium);
+  color: var(--text-light);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  &:hover {
+    background-color: var(--highlight-color);
+    transform: translateX(5px);
+  }
+
+  &.active {
+    background-color: var(--highlight-color);
+    border-color: var(--accent-color);
+  }
+`;
+
+const DroneIcon = styled.span`
+  font-size: 1.2rem;
+`;
+
+const ViewControls = styled.div`
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 5px;
+  z-index: 10;
+`;
+
+const ViewButton = styled.button`
+  background-color: var(--bg-medium);
+  color: ${props => props.active ? 'var(--accent-color)' : 'var(--text-light)'};
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 12px;
+  
+  &:hover {
+    background-color: var(--highlight-color);
+  }
+  
+  &.active {
+    border-color: var(--accent-color);
+    font-weight: bold;
+  }
+`;
+
+const WaypointList = styled.div`
+  margin-top: 10px;
+`;
+
+const WaypointItem = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  background-color: var(--bg-medium);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  margin-bottom: 5px;
+  
+  span {
+    color: var(--text-light);
+  }
+  
+  button {
+    background: none;
+    border: none;
+    color: #ff5555;
+    cursor: pointer;
+    font-size: 14px;
+  }
+`;
+
+// Import file input component
+const FileInput = styled.input`
+  display: none;
+`;
+
+const FileInputLabel = styled.label`
+  width: 100%;
+  padding: 10px;
+  margin: 5px 0;
+  background-color: var(--bg-medium);
+  color: var(--text-light);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+
+  &:hover {
+    background-color: var(--highlight-color);
+  }
+`;
+
+const ImportStatusMessage = styled.div`
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: var(--border-radius-sm);
+  font-size: 12px;
+  background-color: ${props => props.error ? '#662222' : '#226622'};
+  color: white;
+`;
+
+const OriginPointInputs = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+`;
+
+const CoordinateInput = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  
+  label {
+    width: 30px;
+    text-align: right;
+    color: var(--text-dim);
+  }
+  
+  input {
+    flex: 1;
+    background-color: var(--bg-medium);
+    color: var(--text-light);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    padding: 5px;
+    
+    &:focus {
+      border-color: var(--accent-color);
+      outline: none;
+    }
+  }
+`;
+
+const VerifyButton = styled(MenuItem)`
+  margin-top: 10px;
+  background-color: var(--accent-color);
+  color: white;
+  
+  &:hover {
+    background-color: var(--accent-color);
+    filter: brightness(1.1);
+  }
+`;
+
+const ModelControls = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+`;
+
+const ScaleControl = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  
+  label {
+    color: var(--text-dim);
+    font-size: 12px;
+  }
+  
+  input {
+    width: 100%;
+  }
+  
+  .scale-value {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--text-dim);
+    
+    span:nth-child(2) {
+      color: var(--text-light);
+    }
+  }
+`;
+
+// Camera controls for different views
+function CameraControls({ viewMode }) {
+  const { camera } = useThree();
+  
+  useEffect(() => {
+    switch(viewMode) {
+      case 'top':
+        camera.position.set(0, 15, 0);
+        camera.lookAt(0, 0, 0);
+        break;
+      case 'side':
+        camera.position.set(15, 2, 0);
+        camera.lookAt(0, 0, 0);
+        break;
+      case 'front':
+        camera.position.set(0, 2, 15);
+        camera.lookAt(0, 0, 0);
+        break;
+      case 'perspective':
+      default:
+        camera.position.set(8, 8, 8);
+        camera.lookAt(0, 0, 0);
+        break;
+    }
+  }, [viewMode, camera]);
+  
+  return null;
+}
+
+// Simple grid implementation as a fallback
+function SimpleGrid() {
+  return (
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]}>
+      <planeGeometry args={[30, 30]} />
+      <meshBasicMaterial color="#333333" wireframe />
+    </mesh>
+  );
+}
+
+// Custom grid component that should work more reliably
+function CustomGrid() {
+  const size = 30;
+  const divisions = 30;
+  const colorCenterLine = new THREE.Color(0x888888);
+  const colorGrid = new THREE.Color(0x444444);
+  
+  return (
+    <group rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]}>
+      <gridHelper 
+        args={[size, divisions, colorCenterLine, colorGrid]} 
+        position={[0, 0, 0]}
+      />
+      <mesh>
+        <planeGeometry args={[size, size]} />
+        <meshBasicMaterial color="#264026" transparent opacity={0.2} />
+      </mesh>
+    </group>
+  );
+}
+
+// Ground plane
+function Ground() {
+  return (
+    <mesh 
+      rotation={[-Math.PI / 2, 0, 0]} 
+      position={[0, -0.5, 0]} 
+      receiveShadow
+    >
+      <planeGeometry args={[100, 100]} />
+      <meshStandardMaterial color="#264026" />
+    </mesh>
+  );
+}
+
+// Coordinate axes
+function CoordinateAxes() {
+  return (
+    <group>
+      {/* X-axis (red) */}
+      <mesh position={[5, 0, 0]}>
+        <boxGeometry args={[10, 0.1, 0.1]} />
+        <meshStandardMaterial color="#ff2222" emissive="#ff0000" emissiveIntensity={0.5} />
+      </mesh>
+      
+      {/* Y-axis (green) */}
+      <mesh position={[0, 5, 0]}>
+        <boxGeometry args={[0.1, 10, 0.1]} />
+        <meshStandardMaterial color="#22ff22" emissive="#00ff00" emissiveIntensity={0.5} />
+      </mesh>
+      
+      {/* Z-axis (blue) */}
+      <mesh position={[0, 0, 5]}>
+        <boxGeometry args={[0.1, 0.1, 10]} />
+        <meshStandardMaterial color="#2222ff" emissive="#0000ff" emissiveIntensity={0.5} />
+      </mesh>
+    </group>
+  );
+}
+
+// Drone model with improved details
+function Drone({ position }) {
+  const droneRef = useRef();
+  
+  useFrame(() => {
+    if (droneRef.current) {
+      droneRef.current.rotation.y += 0.01;
+    }
+  });
+  
+  return (
+    <group ref={droneRef} position={position}>
+      {/* Main drone body */}
+      <mesh>
+        <boxGeometry args={[0.5, 0.1, 0.5]} />
+        <meshStandardMaterial color="#2a2a2a" />
+      </mesh>
+      
+      {/* Camera housing */}
+      <mesh position={[0, -0.1, 0.15]}>
+        <sphereGeometry args={[0.1, 16, 16]} />
+        <meshStandardMaterial color="#111111" />
+      </mesh>
+      
+      {/* Camera lens */}
+      <mesh position={[0, -0.12, 0.2]}>
+        <cylinderGeometry args={[0.03, 0.03, 0.05, 16]} />
+        <meshStandardMaterial color="#3f3f3f" />
+      </mesh>
+      
+      {/* Arms */}
+      <mesh position={[0.25, 0, 0.25]} rotation={[0, Math.PI/4, 0]}>
+        <boxGeometry args={[0.5, 0.05, 0.05]} />
+        <meshStandardMaterial color="#cc3333" />
+      </mesh>
+      
+      <mesh position={[-0.25, 0, 0.25]} rotation={[0, -Math.PI/4, 0]}>
+        <boxGeometry args={[0.5, 0.05, 0.05]} />
+        <meshStandardMaterial color="#cc3333" />
+      </mesh>
+      
+      <mesh position={[0.25, 0, -0.25]} rotation={[0, -Math.PI/4, 0]}>
+        <boxGeometry args={[0.5, 0.05, 0.05]} />
+        <meshStandardMaterial color="#cc3333" />
+      </mesh>
+      
+      <mesh position={[-0.25, 0, -0.25]} rotation={[0, Math.PI/4, 0]}>
+        <boxGeometry args={[0.5, 0.05, 0.05]} />
+        <meshStandardMaterial color="#cc3333" />
+      </mesh>
+      
+      {/* Motors */}
+      <mesh position={[0.4, 0.05, 0.4]}>
+        <cylinderGeometry args={[0.05, 0.05, 0.08]} />
+        <meshStandardMaterial color="#333333" />
+      </mesh>
+      
+      <mesh position={[-0.4, 0.05, 0.4]}>
+        <cylinderGeometry args={[0.05, 0.05, 0.08]} />
+        <meshStandardMaterial color="#333333" />
+      </mesh>
+      
+      <mesh position={[0.4, 0.05, -0.4]}>
+        <cylinderGeometry args={[0.05, 0.05, 0.08]} />
+        <meshStandardMaterial color="#333333" />
+      </mesh>
+      
+      <mesh position={[-0.4, 0.05, -0.4]}>
+        <cylinderGeometry args={[0.05, 0.05, 0.08]} />
+        <meshStandardMaterial color="#333333" />
+      </mesh>
+      
+      {/* Propellers - spinning animation */}
+      <group position={[0.4, 0.1, 0.4]}>
+        <mesh rotation={[0, 0, 0]}>
+          <boxGeometry args={[0.25, 0.01, 0.025]} />
+          <meshStandardMaterial color="#cccccc" />
+        </mesh>
+        <mesh rotation={[0, Math.PI/2, 0]}>
+          <boxGeometry args={[0.25, 0.01, 0.025]} />
+          <meshStandardMaterial color="#cccccc" />
+        </mesh>
+      </group>
+      
+      <group position={[-0.4, 0.1, 0.4]}>
+        <mesh rotation={[0, 0, 0]}>
+          <boxGeometry args={[0.25, 0.01, 0.025]} />
+          <meshStandardMaterial color="#cccccc" />
+        </mesh>
+        <mesh rotation={[0, Math.PI/2, 0]}>
+          <boxGeometry args={[0.25, 0.01, 0.025]} />
+          <meshStandardMaterial color="#cccccc" />
+        </mesh>
+      </group>
+      
+      <group position={[0.4, 0.1, -0.4]}>
+        <mesh rotation={[0, 0, 0]}>
+          <boxGeometry args={[0.25, 0.01, 0.025]} />
+          <meshStandardMaterial color="#cccccc" />
+        </mesh>
+        <mesh rotation={[0, Math.PI/2, 0]}>
+          <boxGeometry args={[0.25, 0.01, 0.025]} />
+          <meshStandardMaterial color="#cccccc" />
+        </mesh>
+      </group>
+      
+      <group position={[-0.4, 0.1, -0.4]}>
+        <mesh rotation={[0, 0, 0]}>
+          <boxGeometry args={[0.25, 0.01, 0.025]} />
+          <meshStandardMaterial color="#cccccc" />
+        </mesh>
+        <mesh rotation={[0, Math.PI/2, 0]}>
+          <boxGeometry args={[0.25, 0.01, 0.025]} />
+          <meshStandardMaterial color="#cccccc" />
+        </mesh>
+      </group>
+      
+      {/* LED lights */}
+      <mesh position={[0.25, 0.03, 0.25]}>
+        <sphereGeometry args={[0.02, 8, 8]} />
+        <meshStandardMaterial color="#00ff00" emissive="#00ff00" emissiveIntensity={0.5} />
+      </mesh>
+      
+      <mesh position={[-0.25, 0.03, 0.25]}>
+        <sphereGeometry args={[0.02, 8, 8]} />
+        <meshStandardMaterial color="#ff0000" emissive="#ff0000" emissiveIntensity={0.5} />
+      </mesh>
+    </group>
+  );
+}
+
+// Point cloud loader component with improved robustness
+function PointCloudLoader({ 
+  cloudUrl, 
+  pointSize = 0.05, 
+  color = '#4f88e3', 
+  scale = 1, 
+  position = [0, 0, 0], 
+  opacity = 1, 
+  metadata = null, 
+  onLoaded 
+}) {
+  const [loadError, setLoadError] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadedGeometry, setLoadedGeometry] = useState(null);
+  const [debugInfo, setDebugInfo] = useState(null);
+  const pointsRef = useRef();
+  
+  // Use a custom loader pattern instead of useLoader to handle errors better
+  useEffect(() => {
+    let isMounted = true;
+    setIsLoading(true);
+    console.log("PointCloudLoader: Starting to load PLY file:", cloudUrl);
+    console.log("PointCloudLoader: Using metadata:", metadata);
+    
+    const loader = new PLYLoader();
+    
+    try {
+      loader.load(
+        cloudUrl,
+        // Success callback
+        (geometry) => {
+          if (!isMounted) return;
+          console.log("PointCloudLoader: PLY file loaded successfully", geometry);
+          
+          try {
+            // Ensure geometry has attributes
+            if (!geometry.attributes || !geometry.attributes.position) {
+              console.error("PointCloudLoader: Invalid geometry - missing position attribute");
+              setLoadError(new Error("Invalid PLY file - missing position data"));
+              setIsLoading(false);
+              return;
+            }
+            
+            // Log detailed information about the geometry
+            const vertexCount = geometry.attributes.position.count;
+            console.log(`PointCloudLoader: Point cloud has ${vertexCount} vertices`);
+            
+            // Check if color attributes exist
+            const hasColors = geometry.attributes.color !== undefined;
+            console.log(`PointCloudLoader: Point cloud has colors: ${hasColors}`);
+            
+            // Scale down the geometry if it's too large
+            const maxPoints = 1000000; // Increased limit for performance
+            if (geometry.attributes.position.count > maxPoints) {
+              console.warn(`PointCloudLoader: Point cloud has ${geometry.attributes.position.count} points, which may affect performance.`);
+              // We could implement a decimation algorithm here if needed
+            }
+            
+            // Apply transformations based on metadata
+            if (metadata) {
+              // Handle unit conversion if needed (adjust scale in the parent component)
+              console.log(`PointCloudLoader: Using unit type: ${metadata.units} with scale factor: ${metadata.scaleFactor}`);
+              
+              // Apply Y-axis inversion if needed
+              if (metadata.invertY) {
+                console.log("PointCloudLoader: Inverting Y-axis");
+                const positionAttr = geometry.attributes.position;
+                for (let i = 0; i < positionAttr.count; i++) {
+                  const index = i * 3 + 1; // Y is the second component (index 1)
+                  positionAttr.array[index] = -positionAttr.array[index];
+                }
+                positionAttr.needsUpdate = true;
+              }
+              
+              // If using custom coloring modes, we may need to prepare for that
+              if (metadata.colorMode && metadata.colorMode !== 'default') {
+                console.log(`PointCloudLoader: Using custom color mode: ${metadata.colorMode}`);
+                
+                // For height-based coloring, we need to compute the height range
+                if (metadata.colorMode === 'height') {
+                  const positionAttr = geometry.attributes.position;
+                  let minY = Infinity;
+                  let maxY = -Infinity;
+                  
+                  // Find min/max Y values
+                  for (let i = 0; i < positionAttr.count; i++) {
+                    const y = positionAttr.array[i * 3 + 1];
+                    minY = Math.min(minY, y);
+                    maxY = Math.max(maxY, y);
+                  }
+                  
+                  // Create color attribute if it doesn't exist
+                  if (!geometry.attributes.color) {
+                    const colorArray = new Float32Array(positionAttr.count * 3);
+                    geometry.setAttribute('color', new THREE.BufferAttribute(colorArray, 3));
+                  }
+                  
+                  // Set colors based on height
+                  const colorAttr = geometry.attributes.color;
+                  const heightRange = maxY - minY;
+                  
+                  for (let i = 0; i < positionAttr.count; i++) {
+                    const y = positionAttr.array[i * 3 + 1];
+                    // Normalize height to [0,1] range
+                    const normalizedHeight = heightRange > 0 ? (y - minY) / heightRange : 0;
+                    
+                    // Set RGB based on height using a gradient (blue to green to red)
+                    if (normalizedHeight < 0.5) {
+                      // Blue to green (0.0 - 0.5)
+                      const t = normalizedHeight * 2;
+                      colorAttr.array[i * 3] = t;         // R: 0 to 1
+                      colorAttr.array[i * 3 + 1] = t;     // G: 0 to 1
+                      colorAttr.array[i * 3 + 2] = 1 - t; // B: 1 to 0
+                    } else {
+                      // Green to red (0.5 - 1.0)
+                      const t = (normalizedHeight - 0.5) * 2;
+                      colorAttr.array[i * 3] = t;         // R: 0 to 1
+                      colorAttr.array[i * 3 + 1] = 1 - t; // G: 1 to 0
+                      colorAttr.array[i * 3 + 2] = 0;     // B: 0
+                    }
+                  }
+                  
+                  colorAttr.needsUpdate = true;
+                }
+                
+                // For 'custom' color mode, we'll use the specified color
+                // This is handled by the material settings below
+              }
+            }
+            
+            // Normalize geometry if needed
+            if (!geometry.boundingBox) {
+              geometry.computeBoundingBox();
+            }
+            
+            if (geometry.boundingBox) {
+              const size = new THREE.Vector3();
+              geometry.boundingBox.getSize(size);
+              
+              // Log size information
+              console.log(`PointCloudLoader: Point cloud dimensions: ${size.x.toFixed(2)} x ${size.y.toFixed(2)} x ${size.z.toFixed(2)}`);
+              
+              // Center the geometry if it's not centered
+              if (Math.abs(geometry.boundingBox.min.x) > 0.001 || 
+                  Math.abs(geometry.boundingBox.min.y) > 0.001 || 
+                  Math.abs(geometry.boundingBox.min.z) > 0.001) {
+                const center = new THREE.Vector3();
+                geometry.boundingBox.getCenter(center);
+                console.log(`PointCloudLoader: Centering point cloud from ${center.x.toFixed(2)}, ${center.y.toFixed(2)}, ${center.z.toFixed(2)}`);
+                geometry.translate(-center.x, -center.y, -center.z);
+              }
+              
+              // Store debug information
+              setDebugInfo({
+                vertices: vertexCount,
+                hasColors: hasColors,
+                dimensions: {
+                  x: size.x.toFixed(2),
+                  y: size.y.toFixed(2),
+                  z: size.z.toFixed(2)
+                },
+                metadata: metadata
+              });
+              
+              // Notify about size and completion
+              if (onLoaded) {
+                onLoaded({ 
+                  geometry, 
+                  size, 
+                  debugInfo: { 
+                    vertices: vertexCount, 
+                    hasColors, 
+                    size,
+                    metadata 
+                  } 
+                });
+              }
+            }
+            
+            setLoadedGeometry(geometry);
+            setIsLoading(false);
+            
+          } catch (error) {
+            console.error("PointCloudLoader: Error processing point cloud geometry:", error);
+            setLoadError(error);
+            setIsLoading(false);
+          }
+        },
+        // Progress callback
+        (xhr) => {
+          const progress = Math.round(xhr.loaded / xhr.total * 100);
+          console.log(`PointCloudLoader: ${progress}% loaded`);
+        },
+        // Error callback
+        (error) => {
+          if (!isMounted) return;
+          console.error("PointCloudLoader: Error loading PLY file:", error);
+          setLoadError(error);
+          setIsLoading(false);
+        }
+      );
+    } catch (error) {
+      if (isMounted) {
+        console.error("PointCloudLoader: Error initializing PLY loader:", error);
+        setLoadError(error);
+        setIsLoading(false);
+      }
+    }
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [cloudUrl, onLoaded, metadata]);
+  
+  // Skip rendering if there's an error or still loading
+  if (loadError) {
+    console.error("PointCloudLoader: Error rendering point cloud:", loadError);
+    return (
+      <Html position={[0, 2, 0]}>
+        <div style={{ 
+          background: 'rgba(255,50,50,0.8)', 
+          color: 'white', 
+          padding: '10px',
+          borderRadius: '5px',
+          maxWidth: '200px',
+          textAlign: 'center'
+        }}>
+          Error loading point cloud:<br />
+          {loadError.message || 'Unknown error'}
+        </div>
+      </Html>
+    );
+  }
+  
+  if (isLoading || !loadedGeometry) {
+    return (
+      <Html position={[0, 2, 0]}>
+        <div style={{ 
+          background: 'rgba(0,0,0,0.7)', 
+          color: 'white', 
+          padding: '10px',
+          borderRadius: '5px',
+          maxWidth: '200px',
+          textAlign: 'center'
+        }}>
+          Loading point cloud...
+        </div>
+      </Html>
+    );
+  }
+  
+  // Check if the geometry has a valid position attribute
+  if (!loadedGeometry.attributes || !loadedGeometry.attributes.position) {
+    console.error("PointCloudLoader: Invalid PLY geometry: missing position attribute");
+    return null;
+  }
+  
+  // Determine if we should use custom colors or vertex colors
+  const useVertexColors = loadedGeometry.hasAttribute('color');
+  const useCustomColorMode = metadata && metadata.colorMode && metadata.colorMode !== 'default';
+  
+  console.log("PointCloudLoader: Rendering point cloud with", 
+    loadedGeometry.attributes.position.count, "points, size:", pointSize, 
+    "opacity:", opacity, "position:", position, "scale:", scale,
+    "using vertex colors:", useVertexColors);
+  
+  return (
+    <group>
+      <points ref={pointsRef} position={position} scale={[scale, scale, scale]}>
+        <primitive object={loadedGeometry} attach="geometry" />
+        <pointsMaterial 
+          size={pointSize} 
+          color={useVertexColors || useCustomColorMode ? 'white' : color} 
+          sizeAttenuation 
+          transparent={opacity < 1}
+          opacity={opacity}
+          vertexColors={useVertexColors || useCustomColorMode}
+          alphaTest={0.1}
+          precision="highp"
+        />
+      </points>
+      
+      {/* Metadata display for debugging (hidden by default) */}
+      {debugInfo && metadata && (
+        <Html position={[0, 5, 0]}>
+          <div style={{ 
+            background: 'rgba(0,0,0,0.7)', 
+            color: 'white', 
+            padding: '5px',
+            borderRadius: '3px',
+            fontSize: '10px',
+            maxWidth: '150px',
+            display: 'none' // Hidden by default, set to 'block' to show
+          }}>
+            Points: {debugInfo.vertices}<br/>
+            Colors: {debugInfo.hasColors ? 'Yes' : 'No'}<br/>
+            Size: {debugInfo.dimensions.x} x {debugInfo.dimensions.y} x {debugInfo.dimensions.z}<br/>
+            Units: {metadata.units}<br/>
+            Scale: {metadata.scaleFactor}<br/>
+            Color Mode: {metadata.colorMode}
+          </div>
+        </Html>
+      )}
+    </group>
+  );
+}
+
+// Model loading component
+function ModelLoader({ modelUrl, modelType, scale = 1, position = [0, 0, 0], opacity = 1, onLoaded }) {
+  const [loadError, setLoadError] = useState(null);
+  
+  // Use try-catch with the loader
+  let obj;
+  try {
+    obj = useLoader(OBJLoader, modelUrl);
+  } catch (error) {
+    console.error("Error loading OBJ file:", error);
+    setLoadError(error);
+  }
+  
+  useEffect(() => {
+    if (obj && onLoaded) {
+      try {
+        // Calculate bounds
+        const box = new THREE.Box3().setFromObject(obj);
+        const size = new THREE.Vector3();
+        box.getSize(size);
+        
+        // Apply transparency to all materials
+        obj.traverse((child) => {
+          if (child.isMesh && child.material) {
+            if (Array.isArray(child.material)) {
+              child.material.forEach(mat => {
+                mat.transparent = opacity < 1;
+                mat.opacity = opacity;
+              });
+            } else {
+              child.material.transparent = opacity < 1;
+              child.material.opacity = opacity;
+            }
+          }
+        });
+        
+        onLoaded({ object: obj, size });
+      } catch (error) {
+        console.error("Error processing model:", error);
+        setLoadError(error);
+      }
+    }
+  }, [obj, opacity, onLoaded]);
+  
+  if (loadError) {
+    return null; // Render nothing if there's an error
+  }
+  
+  return obj ? (
+    <primitive 
+      object={obj} 
+      scale={[scale, scale, scale]} 
+      position={position}
+    />
+  ) : null;
+}
+
+// Auto-fitting bounds component
+function BoundsControl({ children }) {
+  const api = useBounds();
+  
+  useEffect(() => {
+    // Fit all objects into view
+    api.refresh().fit();
+  }, [api, children]);
+  
+  return children;
+}
+
+// Add a performance optimizer component
+function PerformanceOptimizer() {
+  return (
+    <>
+      <AdaptiveDpr pixelated />
+      <AdaptiveEvents />
+    </>
+  );
+}
+
+// Add a distance measurement tool component
+function DistanceMeasure({ start, end, label }) {
+  if (!start || !end) return null;
+  
+  const points = [start, end];
+  
+  // Calculate distance
+  const distance = Math.sqrt(
+    Math.pow(end[0] - start[0], 2) + 
+    Math.pow(end[1] - start[1], 2) + 
+    Math.pow(end[2] - start[2], 2)
+  ).toFixed(2);
+  
+  // Calculate midpoint for label
+  const midpoint = [
+    (start[0] + end[0]) / 2,
+    (start[1] + end[1]) / 2,
+    (start[2] + end[2]) / 2
+  ];
+  
+  return (
+    <>
+      <Line 
+        points={points} 
+        color="yellow" 
+        lineWidth={2} 
+        dashed={true}
+      />
+      <Html position={midpoint}>
+        <div style={{ 
+          background: 'rgba(0,0,0,0.7)', 
+          color: 'yellow', 
+          padding: '4px 8px', 
+          borderRadius: '4px', 
+          fontSize: '12px',
+          pointerEvents: 'none'
+        }}>
+          {label || `${distance}m`}
+        </div>
+      </Html>
+    </>
+  );
+}
+
+// Add a volume measurement component
+function VolumeMeasure({ bounds, color = "#44aaff" }) {
+  if (!bounds) return null;
+  
+  const { min, max } = bounds;
+  const width = max.x - min.x;
+  const height = max.y - min.y;
+  const depth = max.z - min.z;
+  const center = [
+    (min.x + max.x) / 2,
+    (min.y + max.y) / 2,
+    (min.z + max.z) / 2
+  ];
+  
+  const volume = (width * height * depth).toFixed(2);
+  
+  return (
+    <>
+      <mesh position={center}>
+        <boxGeometry args={[width, height, depth]} />
+        <meshBasicMaterial color={color} transparent opacity={0.2} wireframe />
+      </mesh>
+      <Html position={[center[0], max.y + 0.5, center[2]]}>
+        <div style={{ 
+          background: 'rgba(0,0,0,0.7)', 
+          color: color, 
+          padding: '4px 8px', 
+          borderRadius: '4px', 
+          fontSize: '12px',
+          pointerEvents: 'none',
+          whiteSpace: 'pre-line'
+        }}>
+          {`Volume: ${volume}m³\nW: ${width.toFixed(2)}m\nH: ${height.toFixed(2)}m\nD: ${depth.toFixed(2)}m`}
+        </div>
+      </Html>
+    </>
+  );
+}
+
+// Add advanced post-processing effects
+function PostProcessingEffects({ enabled = true }) {
+  if (!enabled) return null;
+  
+  return (
+    <EffectComposer>
+      <SSAO radius={0.05} intensity={0.2} luminanceInfluence={0.5} />
+      <Bloom intensity={0.1} luminanceThreshold={0.8} luminanceSmoothing={0.9} />
+      <DepthOfField focusDistance={0} focalLength={0.02} bokehScale={1} height={480} />
+    </EffectComposer>
+  );
+}
+
+// Enhanced Scene with OBJ and point cloud support
+function Scene({ 
+  waypoints, 
+  importedModel, 
+  pointCloud, 
+  showStats = false,
+  showPerf = false,
+  showEffects = false,
+  measurements = [],
+  volumeMeasure = null
+}) {
+  // References for the propellers to animate them
+  const propeller1Ref = useRef();
+  const propeller2Ref = useRef();
+  const propeller3Ref = useRef();
+  const propeller4Ref = useRef();
+  
+  // Animate the propellers
+  useFrame(() => {
+    if (propeller1Ref.current) propeller1Ref.current.rotation.y += 0.3;
+    if (propeller2Ref.current) propeller2Ref.current.rotation.y -= 0.3;
+    if (propeller3Ref.current) propeller3Ref.current.rotation.y += 0.3;
+    if (propeller4Ref.current) propeller4Ref.current.rotation.y -= 0.3;
+  });
+
+  return (
+    <>
+      <ambientLight intensity={0.7} />
+      <directionalLight 
+        position={[5, 10, 5]} 
+        intensity={1} 
+        castShadow 
+        shadow-mapSize-width={1024} 
+        shadow-mapSize-height={1024}
+      />
+      
+      {/* Ground plane */}
+      <Ground />
+      
+      {/* Try both grid implementations for compatibility */}
+      <SimpleGrid />
+      <CustomGrid />
+      
+      {/* Coordinate axes */}
+      <CoordinateAxes />
+      
+      {/* Imported 3D Model */}
+      {importedModel && importedModel.url && (
+        <Suspense fallback={null}>
+          <ModelLoader 
+            modelUrl={importedModel.url} 
+            modelType={importedModel.type}
+            scale={importedModel.scale || 1}
+            position={importedModel.position || [0, 0, 0]}
+            opacity={importedModel.opacity || 1}
+            onLoaded={importedModel.onLoaded}
+          />
+        </Suspense>
+      )}
+      
+      {/* Imported Point Cloud */}
+      {pointCloud && pointCloud.url && (
+        <Suspense fallback={null}>
+          <PointCloudLoader 
+            cloudUrl={pointCloud.url}
+            pointSize={pointCloud.pointSize || 0.05}
+            color={pointCloud.color || '#4f88e3'}
+            scale={pointCloud.scale || 1}
+            position={pointCloud.position || [0, 0, 0]}
+            opacity={pointCloud.opacity || 1}
+            metadata={pointCloud.metadata}
+            onLoaded={pointCloud.onLoaded}
+          />
+        </Suspense>
+      )}
+      
+      {/* Drone at current position with propeller animation */}
+      {waypoints.length > 0 && (
+        <group position={waypoints[0]}>
+          {/* Main drone body */}
+          <mesh castShadow>
+            <boxGeometry args={[0.5, 0.1, 0.5]} />
+            <meshStandardMaterial color="#2a2a2a" />
+          </mesh>
+          
+          {/* Camera housing */}
+          <mesh position={[0, -0.1, 0.15]} castShadow>
+            <sphereGeometry args={[0.1, 16, 16]} />
+            <meshStandardMaterial color="#111111" />
+          </mesh>
+          
+          {/* Camera lens */}
+          <mesh position={[0, -0.12, 0.2]} castShadow>
+            <cylinderGeometry args={[0.03, 0.03, 0.05, 16]} />
+            <meshStandardMaterial color="#3f3f3f" />
+          </mesh>
+          
+          {/* Arms */}
+          <mesh position={[0.25, 0, 0.25]} rotation={[0, Math.PI/4, 0]} castShadow>
+            <boxGeometry args={[0.5, 0.05, 0.05]} />
+            <meshStandardMaterial color="#cc3333" />
+          </mesh>
+          
+          <mesh position={[-0.25, 0, 0.25]} rotation={[0, -Math.PI/4, 0]} castShadow>
+            <boxGeometry args={[0.5, 0.05, 0.05]} />
+            <meshStandardMaterial color="#cc3333" />
+          </mesh>
+          
+          <mesh position={[0.25, 0, -0.25]} rotation={[0, -Math.PI/4, 0]} castShadow>
+            <boxGeometry args={[0.5, 0.05, 0.05]} />
+            <meshStandardMaterial color="#cc3333" />
+          </mesh>
+          
+          <mesh position={[-0.25, 0, -0.25]} rotation={[0, Math.PI/4, 0]} castShadow>
+            <boxGeometry args={[0.5, 0.05, 0.05]} />
+            <meshStandardMaterial color="#cc3333" />
+          </mesh>
+          
+          {/* Motors */}
+          <mesh position={[0.4, 0.05, 0.4]} castShadow>
+            <cylinderGeometry args={[0.05, 0.05, 0.08]} />
+            <meshStandardMaterial color="#333333" />
+          </mesh>
+          
+          <mesh position={[-0.4, 0.05, 0.4]} castShadow>
+            <cylinderGeometry args={[0.05, 0.05, 0.08]} />
+            <meshStandardMaterial color="#333333" />
+          </mesh>
+          
+          <mesh position={[0.4, 0.05, -0.4]} castShadow>
+            <cylinderGeometry args={[0.05, 0.05, 0.08]} />
+            <meshStandardMaterial color="#333333" />
+          </mesh>
+          
+          <mesh position={[-0.4, 0.05, -0.4]} castShadow>
+            <cylinderGeometry args={[0.05, 0.05, 0.08]} />
+            <meshStandardMaterial color="#333333" />
+          </mesh>
+          
+          {/* Propellers - with spinning animation */}
+          <group position={[0.4, 0.1, 0.4]} ref={propeller1Ref}>
+            <mesh rotation={[0, 0, 0]} castShadow>
+              <boxGeometry args={[0.25, 0.01, 0.025]} />
+              <meshStandardMaterial color="#cccccc" />
+            </mesh>
+            <mesh rotation={[0, Math.PI/2, 0]} castShadow>
+              <boxGeometry args={[0.25, 0.01, 0.025]} />
+              <meshStandardMaterial color="#cccccc" />
+            </mesh>
+          </group>
+          
+          <group position={[-0.4, 0.1, 0.4]} ref={propeller2Ref}>
+            <mesh rotation={[0, 0, 0]} castShadow>
+              <boxGeometry args={[0.25, 0.01, 0.025]} />
+              <meshStandardMaterial color="#cccccc" />
+            </mesh>
+            <mesh rotation={[0, Math.PI/2, 0]} castShadow>
+              <boxGeometry args={[0.25, 0.01, 0.025]} />
+              <meshStandardMaterial color="#cccccc" />
+            </mesh>
+          </group>
+          
+          <group position={[0.4, 0.1, -0.4]} ref={propeller3Ref}>
+            <mesh rotation={[0, 0, 0]} castShadow>
+              <boxGeometry args={[0.25, 0.01, 0.025]} />
+              <meshStandardMaterial color="#cccccc" />
+            </mesh>
+            <mesh rotation={[0, Math.PI/2, 0]} castShadow>
+              <boxGeometry args={[0.25, 0.01, 0.025]} />
+              <meshStandardMaterial color="#cccccc" />
+            </mesh>
+          </group>
+          
+          <group position={[-0.4, 0.1, -0.4]} ref={propeller4Ref}>
+            <mesh rotation={[0, 0, 0]} castShadow>
+              <boxGeometry args={[0.25, 0.01, 0.025]} />
+              <meshStandardMaterial color="#cccccc" />
+            </mesh>
+            <mesh rotation={[0, Math.PI/2, 0]} castShadow>
+              <boxGeometry args={[0.25, 0.01, 0.025]} />
+              <meshStandardMaterial color="#cccccc" />
+            </mesh>
+          </group>
+          
+          {/* LED lights */}
+          <mesh position={[0.25, 0.03, 0.25]} castShadow>
+            <sphereGeometry args={[0.02, 8, 8]} />
+            <meshStandardMaterial color="#00ff00" emissive="#00ff00" emissiveIntensity={0.5} />
+          </mesh>
+          
+          <mesh position={[-0.25, 0.03, 0.25]} castShadow>
+            <sphereGeometry args={[0.02, 8, 8]} />
+            <meshStandardMaterial color="#ff0000" emissive="#ff0000" emissiveIntensity={0.5} />
+          </mesh>
+        </group>
+      )}
+      
+      {/* Waypoint markers */}
+      {waypoints.map((pos, index) => (
+        <mesh key={index} position={pos} castShadow>
+          <sphereGeometry args={[0.2, 16, 16]} />
+          <meshStandardMaterial color="#ff5555" transparent opacity={0.7} />
+        </mesh>
+      ))}
+      
+      {/* Flight path lines */}
+      {waypoints.length > 1 && waypoints.map((pos, index) => {
+        if (index < waypoints.length - 1) {
+          const startPos = new THREE.Vector3(pos[0], pos[1], pos[2]);
+          const endPos = new THREE.Vector3(
+            waypoints[index+1][0],
+            waypoints[index+1][1], 
+            waypoints[index+1][2]
+          );
+          
+          const points = [];
+          points.push(startPos);
+          points.push(endPos);
+          
+          return (
+            <line key={`line-${index}`}>
+              <bufferGeometry
+                attach="geometry"
+                onUpdate={self => {
+                  self.setFromPoints(points);
+                }}
+              />
+              <lineBasicMaterial color="#ff5555" linewidth={2} />
+            </line>
+          );
+        }
+        return null;
+      })}
+      
+      {/* Add measurement tools */}
+      {measurements.map((measure, idx) => (
+        <DistanceMeasure 
+          key={`measure-${idx}`}
+          start={measure.start}
+          end={measure.end}
+          label={measure.label}
+        />
+      ))}
+      
+      {/* Add volume measurement if enabled */}
+      {volumeMeasure && (
+        <VolumeMeasure bounds={volumeMeasure} />
+      )}
+      
+      {/* Add performance stats overlay (only visible when showStats is true) */}
+      {showStats && <Stats />}
+      
+      {/* Add performance monitor */}
+      {showPerf && <Perf position="bottom-right" />}
+      
+      {/* Add orientation gizmo */}
+      <GizmoHelper alignment="bottom-right" margin={[80, 80]}>
+        <GizmoViewport />
+      </GizmoHelper>
+      
+      {/* Add post-processing effects */}
+      {showEffects && <PostProcessingEffects />}
+      
+      {/* Add performance optimizer */}
+      <PerformanceOptimizer />
+    </>
+  );
+}
+
+// Modal overlay for popups
+const ModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+`;
+
+const ModalContent = styled.div`
+  background-color: var(--bg-light);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+  width: 500px;
+  max-width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  padding: 20px;
+`;
+
+const ModalHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 15px;
+  
+  h2 {
+    margin: 0;
+    color: var(--text-light);
+    font-size: 1.4rem;
+  }
+  
+  button {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 1.5rem;
+    
+    &:hover {
+      color: var(--text-light);
+    }
+  }
+`;
+
+const FormGroup = styled.div`
+  margin-bottom: 15px;
+  
+  label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--text-light);
+    font-weight: 500;
+  }
+  
+  input, select {
+    width: 100%;
+    padding: 8px 10px;
+    background-color: var(--bg-medium);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    color: var(--text-light);
+    font-size: 14px;
+    
+    &:focus {
+      border-color: var(--accent-color);
+      outline: none;
+    }
+  }
+  
+  select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23ffffff' d='M6 9L0 3h12z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 30px;
+  }
+  
+  .help-text {
+    margin-top: 5px;
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+`;
+
+const FormButtons = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+  
+  button {
+    padding: 8px 16px;
+    border-radius: var(--border-radius-sm);
+    font-size: 14px;
+    cursor: pointer;
+    
+    &.cancel {
+      background-color: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-light);
+      
+      &:hover {
+        background-color: var(--highlight-color);
+      }
+    }
+    
+    &.confirm {
+      background-color: var(--accent-color);
+      border: 1px solid var(--accent-color);
+      color: white;
+      
+      &:hover {
+        filter: brightness(1.1);
+      }
+    }
+  }
+`;
+
+const RadioGroup = styled.div`
+  display: flex;
+  gap: 15px;
+  margin-top: 5px;
+  
+  label {
+    display: flex;
+    align-items: center;
+    font-weight: normal;
+    cursor: pointer;
+    
+    input {
+      width: auto;
+      margin-right: 5px;
+    }
+  }
+`;
+
+// Enhanced Mission Planner with OBJ and point cloud import
+function MissionPlanner() {
+  const [selectedDrone, setSelectedDrone] = useState(null);
+  const [missionType, setMissionType] = useState(null);
+  const [viewMode, setViewMode] = useState('perspective');
+  const [waypoints, setWaypoints] = useState([
+    [0, 0, 0],
+    [2, 1, 2],
+    [4, 2, 0],
+    [2, 1, -2]
+  ]);
+  
+  // File import states
+  const [importedModel, setImportedModel] = useState(null);
+  const [pointCloud, setPointCloud] = useState(null);
+  const [importError, setImportError] = useState('');
+  const [importSuccess, setImportSuccess] = useState('');
+  const [modelScale, setModelScale] = useState(1);
+  const [pointSize, setPointSize] = useState(0.05);
+  const [modelOpacity, setModelOpacity] = useState(1);
+  const [pointCloudOpacity, setPointCloudOpacity] = useState(1);
+  
+  // Point cloud metadata collection modal
+  const [showPointCloudModal, setShowPointCloudModal] = useState(false);
+  const [pendingPointCloudFile, setPendingPointCloudFile] = useState(null);
+  const [pointCloudMetadata, setPointCloudMetadata] = useState({
+    units: 'meters',
+    scaleFactor: 1,
+    hasClassification: false,
+    originX: 0,
+    originY: 0,
+    originZ: 0,
+    invertY: false,
+    colorMode: 'default'
+  });
+  
+  // Collapsible sections state
+  const [collapsedSections, setCollapsedSections] = useState({
+    lidarControls: false
+  });
+  
+  // Origin point states
+  const [showOriginSettings, setShowOriginSettings] = useState(false);
+  const [originX, setOriginX] = useState(0);
+  const [originY, setOriginY] = useState(0);
+  const [originZ, setOriginZ] = useState(0);
+  
+  // Safety check states
+  const [showSafetyCheck, setShowSafetyCheck] = useState(false);
+  const [waypointsVerified, setWaypointsVerified] = useState(false);
+  const [pathsVerified, setPathsVerified] = useState(false);
+  
+  // Calibration states
+  const [showCalibration, setShowCalibration] = useState(false);
+  
+  const [showStats, setShowStats] = useState(false);
+  const [showPerf, setShowPerf] = useState(false);
+  const [showEffects, setShowEffects] = useState(false);
+  const [measurements, setMeasurements] = useState([]);
+  const [volumeMeasure, setVolumeMeasure] = useState(null);
+  const [isAddingMeasurement, setIsAddingMeasurement] = useState(false);
+  const [measurementStart, setMeasurementStart] = useState(null);
+  
+  const drones = [
+    { id: 'dji', name: 'DJI Drone', icon: '🚁' },
+    { id: 'harmony', name: 'Drone Harmony', icon: '🛸' },
+    { id: 'auterion', name: 'Auterion', icon: '✈️' }
+  ];
+
+  const missionTypes = [
+    { id: 'inspection', name: 'Inspection Mission', icon: '🔍' },
+    { id: 'mapping', name: 'Mapping Mission', icon: '🗺️' },
+    { id: 'survey', name: 'Survey Mission', icon: '📏' }
+  ];
+  
+  // Create object URLs for imported files
+  const createObjectURL = (file) => {
+    return URL.createObjectURL(file);
+  };
+  
+  // Handle model opacity change
+  const handleModelOpacityChange = (e) => {
+    const newOpacity = parseFloat(e.target.value);
+    setModelOpacity(newOpacity);
+    
+    if (importedModel) {
+      setImportedModel({
+        ...importedModel,
+        opacity: newOpacity
+      });
+    }
+  };
+  
+  // Handle point cloud opacity change
+  const handlePointCloudOpacityChange = (e) => {
+    const newOpacity = parseFloat(e.target.value);
+    setPointCloudOpacity(newOpacity);
+    
+    if (pointCloud) {
+      setPointCloud({
+        ...pointCloud,
+        opacity: newOpacity
+      });
+    }
+  };
+  
+  // Handle model file import
+  const handleModelImport = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    // Check if file is an OBJ file
+    if (!file.name.toLowerCase().endsWith('.obj')) {
+      setImportError('Only OBJ files are supported for 3D models');
+      setImportSuccess('');
+      return;
+    }
+    
+    try {
+      // Create object URL for the file
+      const objectUrl = createObjectURL(file);
+      
+      setImportedModel({
+        url: objectUrl,
+        type: 'obj',
+        name: file.name,
+        scale: modelScale,
+        opacity: modelOpacity,
+        position: [0, 0, 0],
+        onLoaded: (modelData) => {
+          console.log('Model loaded:', modelData);
+        }
+      });
+      
+      setImportSuccess(`Model "${file.name}" imported successfully`);
+      setImportError('');
+      setShowOriginSettings(true);
+    } catch (error) {
+      console.error("Error importing OBJ file:", error);
+      setImportError(`Failed to import model: ${error.message}`);
+      setImportSuccess('');
+    }
+  };
+  
+  // Update point cloud metadata
+  const handleMetadataChange = (field, value) => {
+    setPointCloudMetadata(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+  
+  // Submit point cloud metadata and finalize import
+  const submitPointCloudMetadata = () => {
+    if (!pendingPointCloudFile) return;
+    
+    try {
+      console.log("Importing PLY file with metadata:", pendingPointCloudFile.name, pointCloudMetadata);
+      
+      // Create object URL for the file
+      const objectUrl = createObjectURL(pendingPointCloudFile);
+      
+      // Create a point cloud object with metadata incorporated
+      const newPointCloud = {
+        url: objectUrl,
+        name: pendingPointCloudFile.name,
+        pointSize: pointSize,
+        opacity: pointCloudOpacity,
+        scale: modelScale * parseFloat(pointCloudMetadata.scaleFactor),
+        position: [
+          parseFloat(pointCloudMetadata.originX), 
+          parseFloat(pointCloudMetadata.originY), 
+          parseFloat(pointCloudMetadata.originZ)
+        ],
+        metadata: {
+          ...pointCloudMetadata,
+          fileSize: pendingPointCloudFile.size,
+          fileType: pendingPointCloudFile.name.split('.').pop().toLowerCase(),
+          importTime: new Date().toISOString()
+        },
+        loadTime: new Date().toISOString(),
+        fileSize: pendingPointCloudFile.size,
+        onLoaded: (cloudData) => {
+          console.log('Point cloud loaded with metadata:', cloudData);
+          // Update the point cloud state with additional info from the loader
+          if (cloudData && cloudData.size) {
+            setPointCloud(prev => ({
+              ...prev,
+              size: {
+                x: cloudData.size.x,
+                y: cloudData.size.y,
+                z: cloudData.size.z
+              },
+              points: cloudData.geometry?.attributes?.position?.count || 0,
+              hasColors: cloudData.geometry?.hasAttribute('color') || false
+            }));
+          }
+        }
+      };
+      
+      // Set the point cloud state
+      setPointCloud(newPointCloud);
+      
+      // Show success message
+      setImportSuccess(`Point cloud "${pendingPointCloudFile.name}" imported with custom metadata`);
+      setImportError('');
+      
+      // Reset the pending file and close modal
+      setPendingPointCloudFile(null);
+      setShowPointCloudModal(false);
+      
+      // Optionally show origin settings if required
+      if (pointCloudMetadata.units !== 'meters') {
+        setShowOriginSettings(true);
+      }
+    } catch (error) {
+      console.error("Error importing PLY file with metadata:", error);
+      setImportError(`Failed to import point cloud: ${error.message}`);
+      setImportSuccess('');
+      setPendingPointCloudFile(null);
+      setShowPointCloudModal(false);
+    }
+  };
+  
+  // Handle point cloud import
+  const handlePointCloudImport = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    // Check if file is a PLY file
+    if (!file.name.toLowerCase().endsWith('.ply')) {
+      setImportError('Only PLY files are supported for point clouds');
+      setImportSuccess('');
+      return;
+    }
+    
+    try {
+      console.log("Selected PLY file:", file.name, "size:", file.size);
+      
+      // Store the file and show metadata collection modal
+      setPendingPointCloudFile(file);
+      setShowPointCloudModal(true);
+      
+    } catch (error) {
+      console.error("Error selecting PLY file:", error);
+      setImportError(`Failed to process point cloud: ${error.message}`);
+      setImportSuccess('');
+    }
+  };
+  
+  // Handle scale change
+  const handleScaleChange = (e) => {
+    const newScale = parseFloat(e.target.value);
+    setModelScale(newScale);
+    
+    if (importedModel) {
+      setImportedModel({
+        ...importedModel,
+        scale: newScale
+      });
+    }
+    
+    if (pointCloud) {
+      // For point clouds, we need to consider the scale factor from metadata
+      const scaleFactor = pointCloud.metadata?.scaleFactor || 1;
+      
+      setPointCloud({
+        ...pointCloud,
+        scale: newScale * scaleFactor
+      });
+      
+      console.log(`Scale updated: base scale ${newScale}x with factor ${scaleFactor} = ${newScale * scaleFactor}x`);
+    }
+  };
+  
+  // Handle point size change
+  const handlePointSizeChange = (e) => {
+    const newSize = parseFloat(e.target.value);
+    setPointSize(newSize);
+    
+    if (pointCloud) {
+      setPointCloud({
+        ...pointCloud,
+        pointSize: newSize
+      });
+    }
+  };
+  
+  // Handle color mode change
+  const handleColorModeChange = (e) => {
+    const newColorMode = e.target.value;
+    
+    if (pointCloud && pointCloud.metadata) {
+      // Update the pointCloud metadata with new color mode
+      const updatedMetadata = {
+        ...pointCloud.metadata,
+        colorMode: newColorMode
+      };
+      
+      setPointCloud({
+        ...pointCloud,
+        metadata: updatedMetadata
+      });
+      
+      setImportSuccess(`Point cloud visualization updated to color by ${newColorMode}`);
+    }
+  };
+  
+  // Reset scale to default
+  const resetScale = () => {
+    const defaultScale = 1.0;
+    setModelScale(defaultScale);
+    
+    if (importedModel) {
+      setImportedModel({
+        ...importedModel,
+        scale: defaultScale
+      });
+    }
+    
+    if (pointCloud) {
+      const scaleFactor = pointCloud.metadata?.scaleFactor || 1;
+      setPointCloud({
+        ...pointCloud,
+        scale: defaultScale * scaleFactor
+      });
+    }
+    
+    setImportSuccess('Scale reset to default (1.0x)');
+  };
+  
+  // Reset point size to default
+  const resetPointSize = () => {
+    const defaultPointSize = 0.05;
+    setPointSize(defaultPointSize);
+    
+    if (pointCloud) {
+      setPointCloud({
+        ...pointCloud,
+        pointSize: defaultPointSize
+      });
+    }
+    
+    setImportSuccess('Point size reset to default (0.05)');
+  };
+  
+  // Reset opacity to default
+  const resetOpacity = () => {
+    const defaultOpacity = 1.0;
+    setPointCloudOpacity(defaultOpacity);
+    
+    if (pointCloud) {
+      setPointCloud({
+        ...pointCloud,
+        opacity: defaultOpacity
+      });
+    }
+    
+    setImportSuccess('Opacity reset to default (1.0)');
+  };
+  
+  // Toggle collapsed section
+  const toggleCollapsedSection = (section) => {
+    setCollapsedSections({
+      ...collapsedSections,
+      [section]: !collapsedSections[section]
+    });
+  };
+  
+  // Verify origin point
+  const verifyOriginPoint = () => {
+    // Update model position
+    if (importedModel) {
+      setImportedModel({
+        ...importedModel,
+        position: [parseFloat(originX), parseFloat(originY), parseFloat(originZ)]
+      });
+    }
+    
+    if (pointCloud) {
+      setPointCloud({
+        ...pointCloud,
+        position: [parseFloat(originX), parseFloat(originY), parseFloat(originZ)]
+      });
+    }
+    
+    setShowOriginSettings(false);
+    setShowCalibration(false);
+    setImportSuccess('Origin point verified successfully');
+  };
+  
+  // Verify waypoints
+  const verifyWaypoints = () => {
+    setWaypointsVerified(true);
+    setImportSuccess('Waypoints verified successfully');
+  };
+  
+  // Verify paths
+  const verifyPaths = () => {
+    setPathsVerified(true);
+    setImportSuccess('Paths verified successfully');
+  };
+  
+  // Add waypoint
+  const addWaypoint = () => {
+    // Add a waypoint at a random position
+    const newX = Math.floor(Math.random() * 10) - 5;
+    const newY = Math.floor(Math.random() * 3);
+    const newZ = Math.floor(Math.random() * 10) - 5;
+    
+    setWaypoints([...waypoints, [newX, newY, newZ]]);
+  };
+  
+  // Remove waypoint
+  const removeWaypoint = (index) => {
+    const newWaypoints = [...waypoints];
+    newWaypoints.splice(index, 1);
+    setWaypoints(newWaypoints);
+  };
+
+  // Add function to add a measurement
+  const addMeasurement = (start, end, label) => {
+    setMeasurements([...measurements, { start, end, label }]);
+  };
+  
+  // Add function to clear measurements
+  const clearMeasurements = () => {
+    setMeasurements([]);
+    setVolumeMeasure(null);
+  };
+  
+  // Add function to handle measurement mode
+  const toggleMeasurementMode = () => {
+    if (isAddingMeasurement) {
+      // Cancel measurement mode
+      setMeasurementStart(null);
+    }
+    setIsAddingMeasurement(!isAddingMeasurement);
+  };
+  
+  // Add function to handle canvas click for measurements
+  const handleCanvasClick = (event) => {
+    if (!isAddingMeasurement) return;
+    
+    // Convert screen coordinates to 3D world position
+    // (This would need a more complex implementation with raycasting)
+    // For now, we'll just use a simplified example
+    const point = [
+      Math.random() * 10 - 5,
+      Math.random() * 5,
+      Math.random() * 10 - 5
+    ];
+    
+    if (!measurementStart) {
+      // Set start point
+      setMeasurementStart(point);
+    } else {
+      // Complete measurement
+      addMeasurement(measurementStart, point);
+      setMeasurementStart(null);
+      setIsAddingMeasurement(false);
+    }
+  };
+  
+  // Add function to measure volume of a 3D model
+  const measureModelVolume = () => {
+    if (!importedModel || !importedModel.object) {
+      setImportError('No model loaded to measure');
+      return;
+    }
+    
+    try {
+      const box = new THREE.Box3().setFromObject(importedModel.object);
+      setVolumeMeasure(box);
+    } catch (error) {
+      console.error("Error measuring volume:", error);
+      setImportError('Failed to measure volume: ' + error.message);
+    }
+  };
+
+  return (
+    <LayoutContainer>
+      {/* Point Cloud Metadata Collection Modal */}
+      {showPointCloudModal && (
+        <ModalOverlay>
+          <ModalContent>
+            <ModalHeader>
+              <h2>Lidar File Settings</h2>
+              <button onClick={() => {
+                setPendingPointCloudFile(null);
+                setShowPointCloudModal(false);
+              }}>×</button>
+            </ModalHeader>
+            
+            <div>
+              <p style={{ color: 'var(--text-dim)', marginBottom: '20px' }}>
+                Please provide information about the PLY file to ensure it displays correctly in the 3D environment.
+              </p>
+              
+              <FormGroup>
+                <label>Selected File</label>
+                <div style={{ 
+                  color: 'var(--text-light)', 
+                  padding: '8px 10px',
+                  background: 'var(--bg-medium)',
+                  borderRadius: 'var(--border-radius-sm)',
+                  border: '1px solid var(--border-color)'
+                }}>
+                  {pendingPointCloudFile?.name} ({Math.round(pendingPointCloudFile?.size / 1024)} KB)
+                </div>
+              </FormGroup>
+              
+              <FormGroup>
+                <label>Units</label>
+                <select 
+                  value={pointCloudMetadata.units}
+                  onChange={(e) => handleMetadataChange('units', e.target.value)}
+                >
+                  <option value="meters">Meters</option>
+                  <option value="feet">Feet</option>
+                  <option value="centimeters">Centimeters</option>
+                  <option value="millimeters">Millimeters</option>
+                  <option value="unknown">Unknown/Custom</option>
+                </select>
+                <div className="help-text">Specify the measurement units used in the point cloud data</div>
+              </FormGroup>
+              
+              <FormGroup>
+                <label>Scale Factor</label>
+                <input 
+                  type="number"
+                  min="0.001"
+                  step="0.001"
+                  value={pointCloudMetadata.scaleFactor}
+                  onChange={(e) => handleMetadataChange('scaleFactor', e.target.value)}
+                />
+                <div className="help-text">Apply scaling to match the environment (1.0 = no scaling)</div>
+              </FormGroup>
+              
+              <FormGroup>
+                <label>Does the file contain point classification data?</label>
+                <RadioGroup>
+                  <label>
+                    <input 
+                      type="radio"
+                      name="hasClassification"
+                      checked={pointCloudMetadata.hasClassification === true}
+                      onChange={() => handleMetadataChange('hasClassification', true)}
+                    />
+                    Yes
+                  </label>
+                  <label>
+                    <input 
+                      type="radio"
+                      name="hasClassification"
+                      checked={pointCloudMetadata.hasClassification === false}
+                      onChange={() => handleMetadataChange('hasClassification', false)}
+                    />
+                    No/Unknown
+                  </label>
+                </RadioGroup>
+              </FormGroup>
+              
+              <FormGroup>
+                <label>Color Mode</label>
+                <select 
+                  value={pointCloudMetadata.colorMode}
+                  onChange={(e) => handleMetadataChange('colorMode', e.target.value)}
+                >
+                  <option value="default">Use file colors (if available)</option>
+                  <option value="height">Color by height</option>
+                  <option value="intensity">Color by intensity (if available)</option>
+                  <option value="classification">Color by classification (if available)</option>
+                  <option value="custom">Use custom color</option>
+                </select>
+              </FormGroup>
+              
+              <FormGroup>
+                <label>Invert Y-axis</label>
+                <RadioGroup>
+                  <label>
+                    <input 
+                      type="radio"
+                      name="invertY"
+                      checked={pointCloudMetadata.invertY === true}
+                      onChange={() => handleMetadataChange('invertY', true)}
+                    />
+                    Yes
+                  </label>
+                  <label>
+                    <input 
+                      type="radio"
+                      name="invertY"
+                      checked={pointCloudMetadata.invertY === false}
+                      onChange={() => handleMetadataChange('invertY', false)}
+                    />
+                    No
+                  </label>
+                </RadioGroup>
+                <div className="help-text">Some point clouds need Y-axis inversion due to coordinate system differences</div>
+              </FormGroup>
+              
+              <FormButtons>
+                <button 
+                  className="cancel"
+                  onClick={() => {
+                    setPendingPointCloudFile(null);
+                    setShowPointCloudModal(false);
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="confirm"
+                  onClick={submitPointCloudMetadata}
+                >
+                  Import Point Cloud
+                </button>
+              </FormButtons>
+            </div>
+          </ModalContent>
+        </ModalOverlay>
+      )}
+      
+      <MenuPane
+        initial={{ x: -30, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ duration: 0.3 }}
+      >
+        {/* Show Calibration UI */}
+        {showCalibration && (
+          <MenuSection>
+            <MenuTitle>C-130e - Calibration</MenuTitle>
+            <MenuItem 
+              className="active"
+              onClick={() => {
+                setShowCalibration(false);
+                setShowOriginSettings(true);
+              }}
+            >
+              <DroneIcon>📐</DroneIcon>
+              Calibration Flight
+            </MenuItem>
+            
+            <MenuItem
+              onClick={() => {
+                setShowCalibration(false);
+                setShowOriginSettings(true);
+              }}
+            >
+              <DroneIcon>📍</DroneIcon>
+              Approximate Origin Point
+            </MenuItem>
+            
+            <div style={{ 
+              color: 'var(--text-dim)', 
+              fontSize: '12px', 
+              margin: '10px 0',
+              fontStyle: 'italic'
+            }}>
+              relative to the drone starting location?
+            </div>
+            
+            {/* Origin point inputs */}
+            <OriginPointInputs>
+              <CoordinateInput>
+                <label>X:</label>
+                <input 
+                  type="number" 
+                  value={originX}
+                  onChange={(e) => setOriginX(e.target.value)}
+                  step="0.1"
+                />
+              </CoordinateInput>
+              
+              <CoordinateInput>
+                <label>Y:</label>
+                <input 
+                  type="number" 
+                  value={originY}
+                  onChange={(e) => setOriginY(e.target.value)}
+                  step="0.1"
+                />
+              </CoordinateInput>
+              
+              <CoordinateInput>
+                <label>Z:</label>
+                <input 
+                  type="number" 
+                  value={originZ}
+                  onChange={(e) => setOriginZ(e.target.value)}
+                  step="0.1"
+                />
+              </CoordinateInput>
+            </OriginPointInputs>
+            
+            <VerifyButton onClick={verifyOriginPoint}>
+              <DroneIcon>✓</DroneIcon>
+              Verify Origin Point
+            </VerifyButton>
+          </MenuSection>
+        )}
+        
+        <div style={{ marginTop: '15px', display: 'flex', gap: '10px' }}>
+          <MenuItem
+        )}
+        
+        {/* Main Mission Planning UI */}
+        {!showCalibration && !showSafetyCheck && (
+          <>
+            <MenuSection>
+              <MenuTitle>Mission Planning</MenuTitle>
+              <div>
+                <h3 style={{ color: 'var(--text-dim)', marginBottom: '10px' }}>Select Drone</h3>
+                {drones.map((drone) => (
+                  <MenuItem
+                    key={drone.id}
+                    className={selectedDrone === drone.id ? 'active' : ''}
+                    onClick={() => setSelectedDrone(drone.id)}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <DroneIcon>{drone.icon}</DroneIcon>
+                    {drone.name}
+                  </MenuItem>
+                ))}
+              </div>
+            </MenuSection>
+
+            <MenuSection>
+              <h3 style={{ color: 'var(--text-dim)', marginBottom: '10px' }}>Mission Type</h3>
+              {missionTypes.map((type) => (
+                <MenuItem
+                  key={type.id}
+                  className={missionType === type.id ? 'active' : ''}
+                  onClick={() => setMissionType(type.id)}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <DroneIcon>{type.icon}</DroneIcon>
+                  {type.name}
+                </MenuItem>
+              ))}
+            </MenuSection>
+            
+            <MenuSection>
+              <MenuTitle>Environment Setup</MenuTitle>
+              <FileInputLabel htmlFor="model-import">
+                <DroneIcon>📦</DroneIcon>
+                Import 3D Model (.obj)
+              </FileInputLabel>
+              <FileInput 
+                id="model-import" 
+                type="file" 
+                accept=".obj"
+                onChange={handleModelImport}
+              />
+              
+              <FileInputLabel htmlFor="pointcloud-import">
+                <DroneIcon>📊</DroneIcon>
+                {pointCloud ? `Replace Point Cloud (${pointCloud.name})` : 'Import Point Cloud (.ply)'}
+              </FileInputLabel>
+              <FileInput 
+                id="pointcloud-import" 
+                type="file" 
+                accept=".ply"
+                onChange={handlePointCloudImport}
+              />
+              
+              {pointCloud && (
+                <div style={{ 
+                  fontSize: '12px',
+                  color: 'var(--text-dim)',
+                  marginTop: '5px',
+                  padding: '5px',
+                  backgroundColor: 'var(--bg-medium)',
+                  borderRadius: 'var(--border-radius-sm)',
+                  border: '1px solid var(--border-color)'
+                }}>
+                  Loaded: {pointCloud.name}<br/>
+                  {pointCloud.points && `Points: ${pointCloud.points.toLocaleString()}`}
+                  {pointCloud.size && <><br/>Size: {pointCloud.size.x}m × {pointCloud.size.y}m × {pointCloud.size.z}m</>}
+                </div>
+              )}
+              
+              {importError && (
+                <ImportStatusMessage error>
+                  {importError}
+                </ImportStatusMessage>
+              )}
+              
+              {importSuccess && (
+                <ImportStatusMessage>
+                  {importSuccess}
+                </ImportStatusMessage>
+              )}
+              
+              {/* Lidar Controls Section - Always visible but collapsible */}
+              <div style={{ marginTop: '15px' }}>
+                <div 
+                  style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    padding: '8px',
+                    backgroundColor: 'var(--bg-medium)',
+                    borderRadius: 'var(--border-radius-sm)',
+                    border: '1px solid var(--border-color)',
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => toggleCollapsedSection('lidarControls')}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <DroneIcon>📡</DroneIcon>
+                    <span style={{ fontWeight: '500' }}>Lidar Visualization Controls</span>
+                  </div>
+                  <span>{collapsedSections.lidarControls ? '▶' : '▼'}</span>
+                </div>
+                
+                {!collapsedSections.lidarControls && (
+                  <div style={{ 
+                    padding: '12px',
+                    backgroundColor: 'rgba(0,0,0,0.2)', 
+                    borderRadius: 'var(--border-radius-sm)',
+                    marginTop: '5px',
+                    border: '1px solid var(--border-color)'
+                  }}>
+                    <ScaleControl>
+                      <label>Color Mode</label>
+                      <select 
+                        value={pointCloud?.metadata?.colorMode || 'default'}
+                        onChange={handleColorModeChange}
+                        style={{
+                          width: '100%',
+                          padding: '8px',
+                          backgroundColor: 'var(--bg-medium)',
+                          border: '1px solid var(--border-color)',
+                          borderRadius: 'var(--border-radius-sm)',
+                          color: 'var(--text-light)',
+                          marginBottom: '10px'
+                        }}
+                        disabled={!pointCloud}
+                      >
+                        <option value="default">Use file colors (if available)</option>
+                        <option value="height">Color by height</option>
+                        <option value="intensity">Color by intensity (if available)</option>
+                        <option value="classification">Color by classification (if available)</option>
+                        <option value="custom">Use custom color</option>
+                      </select>
+                    </ScaleControl>
+                    
+                    <ScaleControl>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <label>Point Size: {pointSize.toFixed(2)}</label>
+                        <button 
+                          onClick={resetPointSize}
+                          style={{
+                            background: 'var(--bg-medium)',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: 'var(--border-radius-sm)',
+                            color: 'var(--text-light)',
+                            padding: '2px 8px',
+                            fontSize: '12px',
+                            cursor: 'pointer'
+                          }}
+                          disabled={!pointCloud}
+                        >
+                          Reset
+                        </button>
+                      </div>
+                      <input 
+                        type="range" 
+                        min="0.01" 
+                        max="0.2" 
+                        step="0.01"
+                        value={pointSize}
+                        onChange={handlePointSizeChange}
+                        disabled={!pointCloud}
+                      />
+                      <div className="scale-value">
+                        <span>0.01</span>
+                        <span>{pointSize.toFixed(2)}</span>
+                        <span>0.2</span>
+                      </div>
+                    </ScaleControl>
+                    
+                    <ScaleControl>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <label>Scale: {modelScale.toFixed(2)}x</label>
+                        <button 
+                          onClick={resetScale}
+                          style={{
+                            background: 'var(--bg-medium)',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: 'var(--border-radius-sm)',
+                            color: 'var(--text-light)',
+                            padding: '2px 8px',
+                            fontSize: '12px',
+                            cursor: 'pointer'
+                          }}
+                          disabled={!pointCloud && !importedModel}
+                        >
+                          Reset
+                        </button>
+                      </div>
+                      <input 
+                        type="range" 
+                        min="0.1" 
+                        max="10" 
+                        step="0.1"
+                        value={modelScale}
+                        onChange={handleScaleChange}
+                        disabled={!pointCloud && !importedModel}
+                      />
+                      <div className="scale-value">
+                        <span>0.1x</span>
+                        <span>{modelScale.toFixed(2)}x</span>
+                        <span>10x</span>
+                      </div>
+                      {pointCloud && pointCloud.metadata?.scaleFactor !== 1 && (
+                        <div style={{ fontSize: '11px', color: 'var(--text-dim)', marginTop: '2px' }}>
+                          Applied scale: {(modelScale * (pointCloud.metadata?.scaleFactor || 1)).toFixed(2)}x (includes {pointCloud.metadata?.scaleFactor}x factor)
+                        </div>
+                      )}
+                    </ScaleControl>
+                    
+                    <ScaleControl>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <label>Opacity: {pointCloudOpacity.toFixed(2)}</label>
+                        <button 
+                          onClick={resetOpacity}
+                          style={{
+                            background: 'var(--bg-medium)',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: 'var(--border-radius-sm)',
+                            color: 'var(--text-light)',
+                            padding: '2px 8px',
+                            fontSize: '12px',
+                            cursor: 'pointer'
+                          }}
+                          disabled={!pointCloud}
+                        >
+                          Reset
+                        </button>
+                      </div>
+                      <input 
+                        type="range" 
+                        min="0.1" 
+                        max="1" 
+                        step="0.05"
+                        value={pointCloudOpacity}
+                        onChange={handlePointCloudOpacityChange}
+                        disabled={!pointCloud}
+                      />
+                      <div className="scale-value">
+                        <span>0.1</span>
+                        <span>{pointCloudOpacity.toFixed(2)}</span>
+                        <span>1.0</span>
+                      </div>
+                    </ScaleControl>
+                    
+                    {!pointCloud && (
+                      <div style={{ 
+                        color: 'var(--text-dim)', 
+                        fontSize: '12px', 
+                        fontStyle: 'italic',
+                        textAlign: 'center',
+                        margin: '10px 0 5px'
+                      }}>
+                        Import a point cloud to enable these controls
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </MenuSection>
+
+            <MenuSection>
+              <MenuTitle>Model Controls</MenuTitle>
+              <div style={{ 
+                padding: '10px',
+                backgroundColor: 'var(--bg-medium)', 
+                borderRadius: 'var(--border-radius-sm)',
+                border: '1px solid var(--border-color)'
+              }}>
+                {importedModel && (
+                  <ScaleControl>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <label>Model Opacity: {modelOpacity.toFixed(2)}</label>
+                      <button 
+                        onClick={() => {
+                          setModelOpacity(1.0);
+                          if (importedModel) {
+                            setImportedModel({
+                              ...importedModel,
+                              opacity: 1.0
+                            });
+                          }
+                        }}
+                        style={{
+                          background: 'var(--bg-medium)',
+                          border: '1px solid var(--border-color)',
+                          borderRadius: 'var(--border-radius-sm)',
+                          color: 'var(--text-light)',
+                          padding: '2px 8px',
+                          fontSize: '12px',
+                          cursor: 'pointer'
+                        }}
+                        disabled={!importedModel}
+                      >
+                        Reset
+                      </button>
+                    </div>
+                    <input 
+                      type="range" 
+                      min="0.1" 
+                      max="1" 
+                      step="0.05"
+                      value={modelOpacity}
+                      onChange={handleModelOpacityChange}
+                    />
+                    <div className="scale-value">
+                      <span>0.1</span>
+                      <span>{modelOpacity.toFixed(2)}</span>
+                      <span>1.0</span>
+                    </div>
+                  </ScaleControl>
+                )}
+                
+                {showOriginSettings && (
+                  <>
+                    <h4 style={{ color: 'var(--text-dim)', marginTop: '15px', marginBottom: '5px' }}>Origin Point</h4>
+                    <OriginPointInputs>
+                      <CoordinateInput>
+                        <label>X:</label>
+                        <input 
+                          type="number" 
+                          value={originX}
+                          onChange={(e) => setOriginX(e.target.value)}
+                          step="0.1"
+                        />
+                      </CoordinateInput>
+                      
+                      <CoordinateInput>
+                        <label>Y:</label>
+                        <input 
+                          type="number" 
+                          value={originY}
+                          onChange={(e) => setOriginY(e.target.value)}
+                          step="0.1"
+                        />
+                      </CoordinateInput>
+                      
+                      <CoordinateInput>
+                        <label>Z:</label>
+                        <input 
+                          type="number" 
+                          value={originZ}
+                          onChange={(e) => setOriginZ(e.target.value)}
+                          step="0.1"
+                        />
+                      </CoordinateInput>
+                    </OriginPointInputs>
+                    
+                    <VerifyButton onClick={verifyOriginPoint}>
+                      <DroneIcon>✓</DroneIcon>
+                      Verify Origin Point
+                    </VerifyButton>
+                  </>
+                )}
+                
+                <div style={{ marginTop: '15px', display: 'flex', gap: '10px' }}>
+                  <MenuItem
+                    onClick={() => setShowCalibration(true)}
+                    style={{ flex: 1 }}
+                  >
+                    <DroneIcon>📐</DroneIcon>
+                    Calibration Settings
+                  </MenuItem>
+                  
+                  <MenuItem
+                    onClick={() => setShowSafetyCheck(true)}
+                    style={{ flex: 1 }}
+                  >
+                    <DroneIcon>🛡️</DroneIcon>
+                    Safety Check
+                  </MenuItem>
+                </div>
+              </div>
+            </MenuSection>
+            
+            <MenuSection>
+              <MenuTitle>Measurement Tools</MenuTitle>
+              <MenuItem
+                onClick={toggleMeasurementMode}
+                className={isAddingMeasurement ? 'active' : ''}
+              >
+                <DroneIcon>📏</DroneIcon>
+                {isAddingMeasurement ? 'Cancel Measurement' : 'Add Distance Measurement'}
+              </MenuItem>
+              
+              {importedModel && (
+                <MenuItem
+                  onClick={measureModelVolume}
+                >
+                  <DroneIcon>📊</DroneIcon>
+                  Measure Model Volume
+                </MenuItem>
+              )}
+              
+              {(measurements.length > 0 || volumeMeasure) && (
+                <MenuItem
+                  onClick={clearMeasurements}
+                >
+                  <DroneIcon>🗑️</DroneIcon>
+                  Clear Measurements
+                </MenuItem>
+              )}
+            </MenuSection>
+            
+            <MenuSection>
+              <MenuTitle>Visualization Settings</MenuTitle>
+              <MenuItem
+                onClick={() => setShowStats(!showStats)}
+                className={showStats ? 'active' : ''}
+              >
+                <DroneIcon>📊</DroneIcon>
+                {showStats ? 'Hide Stats' : 'Show Stats'}
+              </MenuItem>
+              
+              <MenuItem
+                onClick={() => setShowPerf(!showPerf)}
+                className={showPerf ? 'active' : ''}
+              >
+                <DroneIcon>⏱️</DroneIcon>
+                {showPerf ? 'Hide Perf' : 'Show Perf'}
+              </MenuItem>
+              
+              <MenuItem
+                onClick={() => setShowEffects(!showEffects)}
+                className={showEffects ? 'active' : ''}
+              >
+                <DroneIcon>🎞️</DroneIcon>
+                {showEffects ? 'Hide Effects' : 'Show Effects'}
+              </MenuItem>
+            </MenuSection>
+          </>
+        )}
+      </MenuPane>
+
+      <ViewerContainer
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        onClick={isAddingMeasurement ? handleCanvasClick : undefined}
+      >
+        {/* Measurement instructions overlay */}
+        {isAddingMeasurement && (
+          <div style={{
+            position: 'absolute',
+            top: '60px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            backgroundColor: 'rgba(0,0,0,0.7)',
+            color: 'white',
+            padding: '8px 16px',
+            borderRadius: '4px',
+            zIndex: 100
+          }}>
+            {!measurementStart ? 'Click to set start point' : 'Click to set end point'}
+          </div>
+        )}
+        
+        <ViewControls>
+          <ViewButton 
+            active={viewMode === 'perspective'} 
+            onClick={() => setViewMode('perspective')}
+          >
+            3D
+          </ViewButton>
+          <ViewButton 
+            active={viewMode === 'top'} 
+            onClick={() => setViewMode('top')}
+          >
+            Top
+          </ViewButton>
+          <ViewButton 
+            active={viewMode === 'side'} 
+            onClick={() => setViewMode('side')}
+          >
+            Side
+          </ViewButton>
+          <ViewButton 
+            active={viewMode === 'front'} 
+            onClick={() => setViewMode('front')}
+          >
+            Front
+          </ViewButton>
+          <ViewButton 
+            active={showStats} 
+            onClick={() => setShowStats(!showStats)}
+          >
+            Stats
+          </ViewButton>
+        </ViewControls>
+        
+        <Canvas 
+          gl={{ 
+            antialias: true,
+            alpha: false,
+            stencil: false,
+            depth: true,
+            powerPreference: "high-performance"
+          }}
+          camera={{ position: [10, 10, 10], fov: 50 }}
+          shadows="soft"
+          dpr={[1, 2]} // Dynamic resolution based on device performance
+          style={{ background: '#111' }}
+        >
+          <Suspense fallback={null}>
+            <CameraControls viewMode={viewMode} />
+            <Scene 
+              waypoints={waypoints} 
+              importedModel={importedModel}
+              pointCloud={pointCloud}
+              showStats={showStats}
+              showPerf={showPerf}
+              showEffects={showEffects}
+              measurements={measurements}
+              volumeMeasure={volumeMeasure}
+            />
+            <OrbitControls 
+              makeDefault 
+              enableDamping
+              dampingFactor={0.05}
+              rotateSpeed={0.7}
+              zoomSpeed={1.0}
+            />
+            <Environment preset="city" />
+          </Suspense>
+        </Canvas>
+        <Loader />
+      </ViewerContainer>
+    </LayoutContainer>
+  );
+}
+
+// DOF Calculator wrapper to restore original styling and spacing
+const DOFWrapperContainer = styled.div`
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  padding: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+`;
+
+// Add a little CSS at the bottom of the file for toggle switches
+const GlobalStyle = styled.div`
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 20px;
+  }
+  
+  .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--bg-medium);
+    transition: .4s;
+    border: 1px solid var(--border-color);
+  }
+  
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 2px;
+    bottom: 1px;
+    background-color: white;
+    transition: .4s;
+  }
+  
+  input:checked + .slider {
+    background-color: var(--accent-color);
+  }
+  
+  input:checked + .slider:before {
+    transform: translateX(18px);
+  }
+  
+  .slider.round {
+    border-radius: 20px;
+  }
+  
+  .slider.round:before {
+    border-radius: 50%;
+  }
+`;
+
+function MainLayout() {
+  const [activeTab, setActiveTab] = useState('mission');
+  
+  return (
+    <GlobalStyle>
+      <StyledVars>
+        <TabBar>
+          <TabButton
+            active={activeTab === 'mission'}
+            onClick={() => setActiveTab('mission')}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            Drone Mission Planner
+          </TabButton>
+          <TabButton
+            active={activeTab === 'dof'}
+            onClick={() => setActiveTab('dof')}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            DOF Calculator
+          </TabButton>
+        </TabBar>
+        
+        <ContentContainer>
+          <AnimatePresence mode="wait">
+            {activeTab === 'mission' ? (
+              <motion.div
+                key="mission"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                style={{ width: '100%', height: '100%' }}
+              >
+                <MissionPlanner />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="dof"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                style={{ 
+                  width: '100%', 
+                  height: '100%',
+                  padding: 0,
+                  overflow: 'hidden'
+                }}
+              >
+                <DOFWrapperContainer>
+                  <DOFCalculator />
+                </DOFWrapperContainer>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </ContentContainer>
+      </StyledVars>
+    </GlobalStyle>
+  );
+}
+
+export default MainLayout; 

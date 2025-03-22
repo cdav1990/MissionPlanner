@@ -1,0 +1,293 @@
+/* Mission Planner Main Styles */
+.mission-planner-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+  background-color: #1a1a1a;
+}
+
+/* Main container with the left panel and right canvas */
+.mission-planner-container .MissionPlannerContainer {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  height: 100%;
+  flex: 1;
+}
+
+/* Left control panel */
+.mission-planner-container .ControlsPanel {
+  width: 320px;
+  padding: 20px;
+  background-color: rgba(30, 30, 30, 0.9);
+  border-right: 1px solid #333;
+  overflow-y: auto;
+  z-index: 10;
+  color: white;
+  flex-shrink: 0;
+  order: 0;
+}
+
+/* Right canvas container */
+.mission-planner-container .CanvasContainer {
+  flex: 1;
+  position: relative;
+  height: 100%;
+  order: 1;
+}
+
+/* Canvas should fill the container */
+.mission-planner-container .CanvasContainer canvas {
+  width: 100% !important;
+  height: 100% !important;
+  outline: none;
+}
+
+/* File controls section */
+.mission-planner-container .FileControls {
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #333;
+}
+
+.mission-planner-container .FileControls h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: #aaa;
+  font-size: 16px;
+}
+
+.mission-planner-container .FileControls input[type="file"] {
+  width: 100%;
+  padding: 8px;
+  background-color: #333;
+  border: 1px solid #444;
+  color: white;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+
+/* Model controls section */
+.mission-planner-container .ModelControls {
+  margin: 20px 0;
+  padding: 15px;
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  border: 1px solid #333;
+}
+
+.mission-planner-container .ModelControls h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #aaa;
+  font-size: 16px;
+}
+
+.mission-planner-container .ModelControls label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.mission-planner-container .ModelControls input[type="range"] {
+  width: 70%;
+  background-color: #333;
+}
+
+.mission-planner-container .ModelControls input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+}
+
+.mission-planner-container .ModelControls button {
+  width: 100%;
+  padding: 8px;
+  background-color: #d32f2f;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.mission-planner-container .ModelControls button:hover {
+  background-color: #b71c1c;
+}
+
+/* View controls section */
+.mission-planner-container .ViewControls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  border: 1px solid #333;
+}
+
+.mission-planner-container .ViewControls h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: #aaa;
+  font-size: 16px;
+}
+
+.mission-planner-container .ViewControls label {
+  display: flex;
+  align-items: center;
+}
+
+.mission-planner-container .ViewControls input[type="checkbox"] {
+  margin-right: 10px;
+  width: 18px;
+  height: 18px;
+}
+
+/* Notification banners */
+.notification-banner {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(255, 165, 0, 0.9);
+  color: #000;
+  padding: 8px 15px;
+  border-radius: 4px;
+  font-size: 13px;
+  z-index: 1000;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  max-width: 500px;
+}
+
+/* Import progress */
+.import-progress {
+  margin-top: 10px;
+  width: 100%;
+}
+
+.import-progress progress {
+  width: 100%;
+  height: 15px;
+  border-radius: 4px;
+  background-color: #333;
+}
+
+.import-progress progress::-webkit-progress-bar {
+  background-color: #333;
+  border-radius: 4px;
+}
+
+.import-progress progress::-webkit-progress-value {
+  background-color: #4f88e3;
+  border-radius: 4px;
+}
+
+.import-progress progress::-moz-progress-bar {
+  background-color: #4f88e3;
+  border-radius: 4px;
+}
+
+/* Error and success messages */
+.error-message {
+  color: #ff5252;
+  margin-top: 10px;
+  padding: 8px;
+  background-color: rgba(255, 82, 82, 0.1);
+  border-radius: 4px;
+  border-left: 3px solid #ff5252;
+}
+
+.success-message {
+  color: #4caf50;
+  margin-top: 10px;
+  padding: 8px;
+  background-color: rgba(76, 175, 80, 0.1);
+  border-radius: 4px;
+  border-left: 3px solid #4caf50;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .mission-planner-container .MissionPlannerContainer {
+    flex-direction: column;
+  }
+  
+  .mission-planner-container .ControlsPanel {
+    width: 100%;
+    max-height: 300px;
+    border-right: none;
+    border-bottom: 1px solid #333;
+  }
+}
+
+/* Add styles for react-slider */
+.horizontal-slider {
+  width: 100%;
+  height: 20px;
+}
+
+.horizontal-slider .track {
+  top: 6px;
+  height: 8px;
+  border-radius: 4px;
+}
+
+/* Make sure slider thumbs are properly aligned */
+.react-slider .thumb {
+  top: -6px !important;
+  margin-left: -10px !important;
+  z-index: 10;
+  cursor: grab !important;
+  touch-action: pan-x !important;
+}
+
+.react-slider .thumb:active {
+  cursor: grabbing !important;
+}
+
+/* Add a smooth transition for all interactive elements */
+.react-slider .thumb, 
+.react-slider .track,
+button, 
+input[type="number"] {
+  transition: all 0.2s ease;
+}
+
+/* Focus styles for better accessibility */
+.react-slider:focus {
+  outline: none;
+}
+
+.react-slider:focus .thumb {
+  box-shadow: 0 0 0 3px rgba(45, 140, 240, 0.5);
+}
+
+/* Custom styles for our specific sliders */
+.position-slider,
+.rotation-slider {
+  width: 100% !important;
+  height: 8px !important;
+  touch-action: pan-x !important;
+}
+
+/* Safari and iOS specific fixes */
+@supports (-webkit-touch-callout: none) {
+  .react-slider .thumb {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+}
+
+/* Ensure drag support on touch devices */
+.react-slider {
+  touch-action: pan-x !important;
+  -webkit-user-select: none;
+  user-select: none;
+} 

@@ -39,6 +39,15 @@ body {
   background-color: var(--bg-dark);
   color: var(--text-light);
   line-height: 1.6;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.App {
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
 }
 
 .app {
@@ -94,6 +103,10 @@ h1 {
   position: relative;
   overflow: hidden;
   border: 1px solid var(--border-color);
+  height: 100%;
+  margin: 0;
+  background: none;
+  box-shadow: none;
 }
 
 .calculator-content {
@@ -104,6 +117,8 @@ h1 {
   flex-grow: 1;
   gap: var(--section-gap);
   margin-top: 0.5rem;
+  height: 100%;
+  overflow-y: auto;
 }
 
 .dof-tab-content {
@@ -111,6 +126,9 @@ h1 {
   grid-template-columns: minmax(400px, 45%) 1fr;
   gap: var(--section-gap);
   align-items: start;
+  height: 100%;
+  overflow-y: auto;
+  padding-right: 10px;
 }
 
 .calculator-inputs {
@@ -1088,6 +1106,7 @@ td {
   display: flex;
   justify-content: center;
   margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
 }
 
 .action-button {
@@ -1485,4 +1504,209 @@ td {
   .preview-container {
     height: 300px;
   }
+}
+
+/* Reset default margins and ensure full viewport coverage */
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Ensure proper Three.js canvas sizing */
+canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Menu styling */
+a {
+  transition: opacity 0.3s ease;
+}
+
+a:hover {
+  opacity: 0.8;
+}
+
+/* Styles for DOF tab's embedded photogrammetry planner */
+.dof-planner-section {
+  margin-top: 1.5rem;
+  background-color: var(--bg-light);
+  border-radius: var(--border-radius);
+  padding: 1.25rem;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow);
+}
+
+.dof-planner-section h2 {
+  color: var(--primary-color);
+  font-size: 1.3rem;
+  margin-top: 0;
+  margin-bottom: 1rem;
+  text-align: center;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.5rem;
+}
+
+.overlap-planner {
+  background-color: var(--bg-medium);
+  border-radius: var(--border-radius);
+  padding: 0.75rem;
+}
+
+.overlap-planner .photogrammetry-planner h3 {
+  display: none; /* Hide the duplicate title */
+}
+
+/* Make the planner layout horizontal in the DOF tab */
+.dof-planner-section .photogrammetry-planner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  background-color: transparent;
+  padding: 0;
+  margin-top: 0;
+  border: none;
+  box-shadow: none;
+}
+
+/* Position inputs on the left side */
+.dof-planner-section .planner-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 0;
+  grid-column: 1;
+}
+
+/* Position results on the right side */
+.dof-planner-section .planner-results {
+  grid-column: 2;
+  grid-template-columns: 1fr;
+  margin-bottom: 0;
+}
+
+.dof-planner-section .planner-tips {
+  grid-column: 1 / -1;
+  margin-top: 1rem;
+}
+
+.dof-planner-section .input-section {
+  padding: 0.75rem;
+  margin-bottom: 0;
+}
+
+/* Adjust spacing for input groups */
+.dof-planner-section .input-group {
+  margin-bottom: 0.75rem;
+}
+
+.dof-planner-section .input-group:last-child {
+  margin-bottom: 0;
+}
+
+/* Make overlap explanation diagram more compact */
+.dof-planner-section .overlap-explainer {
+  padding: 0.75rem;
+  margin-bottom: 0;
+  grid-column: 1 / -1;
+}
+
+.dof-planner-section .overlap-diagram {
+  margin: 0.5rem 0;
+}
+
+/* Responsive adjustments for the planner in DOF tab */
+@media (max-width: 992px) {
+  .dof-planner-section .photogrammetry-planner {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .dof-planner-section .planner-inputs,
+  .dof-planner-section .planner-results,
+  .dof-planner-section .planner-tips,
+  .dof-planner-section .overlap-explainer {
+    grid-column: 1;
+  }
+  
+  .dof-planner-section .planner-results {
+    margin-top: 0.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .dof-planner-section {
+    padding: 1rem;
+  }
+  
+  .overlap-planner {
+    padding: 0.5rem;
+  }
+}
+
+/* MainLayout styles */
+.main-layout {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background-color: #1e1e1e;
+  color: #ffffff;
+}
+
+.tab-bar {
+  display: flex;
+  width: 100%;
+  background-color: #131313;
+  height: 50px;
+  align-items: center;
+  padding: 0 20px;
+  border-bottom: 1px solid #333333;
+}
+
+.tab-button {
+  background-color: transparent;
+  color: #a0a0a0;
+  border: none;
+  padding: 0 20px;
+  height: 100%;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: normal;
+  position: relative;
+}
+
+.tab-button.active {
+  background-color: #2c2c2c;
+  color: #4f88e3;
+  font-weight: bold;
+}
+
+.tab-button.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background-color: #4f88e3;
+}
+
+.content-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: calc(100% - 50px);
+  overflow: hidden;
+}
+
+.dof-wrapper {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  padding: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
 }

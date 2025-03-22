@@ -1,8 +1,109 @@
-# Depth of Field (DOF) Calculator
+# DOF Tool
+
+A comprehensive photography tool that includes a Drone Mission Planner, DOF (Depth of Field) Calculator, and a Point Cloud Viewer for LiDAR data visualization.
+
+## Features
+
+- **Drone Mission Planner**: Plan aerial photography missions with precise calculations
+- **DOF Calculator**: Calculate depth of field for various camera and lens configurations
+- **Point Cloud Viewer**: Visualize 3D point cloud data with support for large datasets
+
+## Point Cloud Viewer Features
+
+The Point Cloud Viewer component now supports:
+
+- **Standard point cloud formats**: PLY, PCD, LAS/LAZ
+- **Potree format for large point clouds**: With Level of Detail (LOD) rendering
+- **Performance optimization**: Automatic detection of hardware capabilities
+- **Error handling**: Fixes NaN values and computes proper bounding spheres
+- **Visualization options**: Color by height, RGB, or solid colors
+- **User controls**: Adjust point size, select renderer type, and more
+
+## Setup
+
+1. Clone the repository
+2. Install dependencies:
+
+```bash
+npm install
+```
+
+3. Set up sample point clouds and Potree for large point cloud support:
+
+```bash
+npm run setup-all
+```
+
+4. Start the development server:
+
+```bash
+cd dof-calculator
+npm start
+```
+
+5. Navigate to http://localhost:5174 in your browser.
+
+## Working with Large Point Clouds
+
+For optimal performance with large point clouds (millions of points), this tool integrates Potree - a WebGL point cloud renderer with Level of Detail (LOD) capabilities.
+
+### Converting LAS/LAZ Files to Potree Format
+
+1. Download [PotreeConverter](https://github.com/potree/PotreeConverter/releases)
+2. Convert your LAS/LAZ file:
+
+```bash
+PotreeConverter C:/path/to/pointcloud.las -o C:/output/path --generate-page
+```
+
+3. Copy the output folder to the `dof-calculator/public/potree-data` directory
+4. In the Point Cloud Viewer, select the Potree renderer option
+
+### Troubleshooting
+
+- **Potree not loading**: Make sure you've run the setup script (`npm run setup-potree`) and that the necessary files exist in `dof-calculator/public/potree/build`.
+- **Point cloud not visible**: Check that sample files exist in `dof-calculator/public/samples`.
+- **Performance issues**: Use the performance profiles in the UI to match your system capabilities.
+- **NaN errors**: The component includes automatic handling for NaN values in point coordinates.
+
+## Implementation Details
+
+The enhanced point cloud implementation includes:
+
+1. **EnhancedPointCloud.jsx**: Core component with:
+   - Auto-detection of hardware capabilities
+   - Potree integration for Level of Detail rendering
+   - Automatic handling of NaN values
+   - Performance monitoring and optimization
+   - Comprehensive error handling
+   
+2. **PointCloudDemo.jsx**: User interface with:
+   - Sample selection and file upload capabilities
+   - Controls for visualization options
+   - Performance profile selection
+   - Real-time feedback on rendering statistics
+
+3. **Setup scripts**:
+   - `setup-potree.js`: Downloads and configures Potree library
+   - `download-samples.js`: Downloads sample point cloud files
+
+## Future Enhancements
+
+Planned improvements for the point cloud viewer:
+
+- Additional visualization modes (intensity, classification, etc.)
+- Support for more point cloud formats (E57, COPC, etc.)
+- Point cloud manipulation tools (cropping, filtering)
+- Measurement tools (distance, area, volume)
+- Integration with photogrammetry tools
+
+## Depth of Field (DOF) Calculator
 
 A comprehensive tool for photographers and photogrammetrists to calculate and visualize depth of field for various camera and lens combinations.
 
-![DOF Calculator](public/images/dof-calculator-screenshot.png)
+- Calculate depth of field, hyperfocal distance, and other critical parameters
+- Support for different camera sensor sizes and lens configurations
+- Visualization of depth of field in a 3D model
 
 ## Features
 

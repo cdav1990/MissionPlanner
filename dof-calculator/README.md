@@ -13,6 +13,11 @@ A comprehensive tool for photographers and photogrammetrists to calculate and vi
 - **Ground Coverage Calculation**: Determine the width and height of the area covered by your camera at a specific distance
 - **Ground Sample Distance (GSD)**: Calculate the pixel resolution on the ground for photogrammetry applications
 - **Responsive Design**: Works on desktop and mobile devices
+- **3D Visualization**: Visualize the camera frustum
+- **Import 3D Models**: Import and view 3D models in OBJ and PLY formats
+- **Import LiDAR Point Clouds**: Import and view LiDAR point clouds
+- **Selection and Measurement Tools**: Use selection and measurement tools for precise measurements
+- **Mission Planning Capabilities**: Plan drone missions with the application
 
 ## Requirements
 
@@ -74,7 +79,6 @@ The calculator implements the following key formulas:
 ```
 dof-calculator/
 ├── public/            # Static assets
-├── src/
 │   ├── assets/        # Application assets
 │   │   ├── DOFCalculator.jsx    # Main calculator component
 │   │   └── DOFVisualization.jsx # Visualization component
@@ -118,4 +122,22 @@ None
 ## Acknowledgments
 
 - Formula references from photographic depth of field theory
-- Inspiration from existing DOF calculators while adding unique features for photogrammetry 
+- Inspiration from existing DOF calculators while adding unique features for photogrammetry
+
+## LiDAR Point Cloud Support
+
+This application supports large point clouds (up to 500 million points) using Potree. To use this feature:
+
+1. Create a `public/potree-data` directory in your project
+2. Convert your LiDAR data to Potree format using [Potree Converter](https://github.com/potree/PotreeConverter)
+3. Place the converted data in the `public/potree-data` directory
+4. Use the LiDAR Import button in the application to load your point clouds
+
+### Converting LiDAR Data for Potree
+
+```bash
+# Example using PotreeConverter
+PotreeConverter.exe C:/path/to/your/lidar.las -o C:/path/to/your/output-folder -p your_project_name
+```
+
+Then copy the output files to the `public/potree-data` directory in your project. 

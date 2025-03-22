@@ -2,12 +2,178 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/svg+xml" href="./vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Photogrammetry Calculator</title>
+    <title>DOF Tool</title>
+    
+    <!-- Add WebGL context management script -->
+    <script>
+      // Define a global tracking object for WebGL issues
+      window.__webglContextIssues = {
+        lossCount: 0,
+        recoveryCount: 0,
+        lastLossTime: null,
+        maxAutoRecoveryAttempts: 3,
+        autoRecoveryAttempts: 0
+      };
+      
+      // Check hardware capability
+      function checkWebGLCapability() {
+        try {
+          const canvas = document.createElement('canvas');
+          const gl = canvas.getContext('webgl2') || 
+                     canvas.getContext('webgl') || 
+                     canvas.getContext('experimental-webgl');
+          
+          if (!gl) {
+            console.warn('WebGL not supported - basic mode will be used');
+            return false;
+          }
+          
+          // Check if context is lost already
+          if (gl.isContextLost()) {
+            console.warn('WebGL context is already lost');
+            return false;
+          }
+          
+          return true;
+        } catch (e) {
+          console.error('Error checking WebGL capability:', e);
+          return false;
+        }
+      }
+      
+      // Set up listeners for WebGL context loss events
+      document.addEventListener('webglcontextlost', function(event) {
+        console.warn('WebGL context lost event detected');
+        window.__webglContextIssues.lossCount++;
+        window.__webglContextIssues.lastLossTime = Date.now();
+        
+        // Prevent the default behavior which would make context unrecoverable
+        event.preventDefault();
+      }, false);
+      
+      // Listen for context restored events
+      document.addEventListener('webglcontextrestored', function(event) {
+        console.log('WebGL context restored event detected');
+        window.__webglContextIssues.recoveryCount++;
+      }, false);
+      
+      // Check WebGL capability on load
+      window.addEventListener('DOMContentLoaded', checkWebGLCapability);
+    </script>
+    
+    <!-- Platform-specific optimizations -->
+    <script>
+      // Early platform detection
+      window.__platformInfo = {
+        isAppleSilicon: /Mac/.test(navigator.platform) && 
+                        navigator.userAgent.includes('AppleWebKit') &&
+                        !navigator.userAgent.includes('Intel'),
+        
+        isHighEnd: navigator.hardwareConcurrency >= 8,
+        
+        gpuTier: 'unknown',
+        
+        detectionComplete: false
+      };
+      
+      // Advanced GPU detection function (run async)
+      function detectGPUCapabilities() {
+        try {
+          const canvas = document.createElement('canvas');
+          const gl = canvas.getContext('webgl2') || 
+                     canvas.getContext('webgl', {
+                       powerPreference: window.__platformInfo.isAppleSilicon ? 'low-power' : 'high-performance'
+                     });
+          
+          if (!gl) {
+            window.__platformInfo.gpuTier = 'basic';
+            return;
+          }
+          
+          // Check extensions
+          const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+          if (debugInfo) {
+            const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) || '';
+            console.log('GPU:', renderer);
+            
+            // Detect high-end GPUs
+            const isHighEnd = /(RTX|Radeon Pro|Quadro|AMD Radeon RX 6|GTX 1080|GTX 1070|RX 580)/i.test(renderer);
+            const isMidRange = /(GTX 1060|GTX 1650|GTX 1050|RX 570|RX 560|Intel Iris)/i.test(renderer);
+            const isAppleGPU = /(Apple M1|Apple M2|Apple M3|Apple GPU)/i.test(renderer);
+            
+            if (isHighEnd) {
+              window.__platformInfo.gpuTier = 'high';
+            } else if (isMidRange || isAppleGPU) {
+              window.__platformInfo.gpuTier = 'medium';
+            } else {
+              window.__platformInfo.gpuTier = 'basic';
+            }
+            
+            // Store the renderer info
+            window.__platformInfo.gpuRenderer = renderer;
+          }
+          
+          // Check limits
+          const maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+          const maxViewportDims = gl.getParameter(gl.MAX_VIEWPORT_DIMS);
+          
+          window.__platformInfo.maxTextureSize = maxTextureSize;
+          window.__platformInfo.maxViewportWidth = maxViewportDims[0];
+          window.__platformInfo.maxViewportHeight = maxViewportDims[1];
+          
+          // Set default performance profile based on detection
+          if (window.__platformInfo.isAppleSilicon) {
+            // For Apple Silicon, use conservative settings
+            window.__platformInfo.performanceProfile = 'conservative';
+          } else if (window.__platformInfo.gpuTier === 'high' && window.__platformInfo.isHighEnd) {
+            // For high-end systems, use maximum settings
+            window.__platformInfo.performanceProfile = 'maximum';
+          } else {
+            // For mid-range, use balanced settings
+            window.__platformInfo.performanceProfile = 'balanced';
+          }
+          
+          // Apply early optimizations based on platform
+          if (window.__platformInfo.isAppleSilicon) {
+            // For Apple Silicon, add garbage collection helper
+            window.__memoryInterval = setInterval(() => {
+              if (window.gc) window.gc();
+            }, 30000);
+          }
+          
+          window.__platformInfo.detectionComplete = true;
+          console.log('Platform detection complete:', window.__platformInfo);
+        } catch (e) {
+          console.error('Error in GPU detection:', e);
+          window.__platformInfo.gpuTier = 'basic';
+          window.__platformInfo.detectionComplete = true;
+        }
+      }
+      
+      // Run detection after a short delay to not block page load
+      setTimeout(detectGPUCapabilities, 1000);
+    </script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root" style="width: 100%; height: 100%;">
+      <div style="display: flex; justify-content: center; align-items: center; height: 100vh; font-family: Arial, sans-serif;">
+        <div style="text-align: center;">
+          <div style="border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; margin: 0 auto; animation: spin 1s linear infinite;"></div>
+          <p style="margin-top: 20px;">Loading DOF Tool...</p>
+        </div>
+      </div>
+    </div>
+    
+    <style>
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    </style>
+
+    <!-- Load our Vite/React app as a module - this will be initiated after the page loads -->
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
