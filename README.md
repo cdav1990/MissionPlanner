@@ -8,6 +8,19 @@ A comprehensive photography tool that includes a Drone Mission Planner, DOF (Dep
 - **DOF Calculator**: Calculate depth of field for various camera and lens configurations
 - **Point Cloud Viewer**: Visualize 3D point cloud data with support for large datasets
 
+## Mission Planner Features
+
+The Mission Planner component provides:
+
+- **Interactive 3D Environment**: Plan and visualize drone flight paths in a 3D space
+- **Camera Frustum Visualization**: See exactly what the drone camera will capture
+- **Multiple View Modes**: Perspective, Top, Front, and Side views for comprehensive planning
+- **Realistic Drone Model**: Detailed 3D model of the drone with camera position
+- **Manual Drone Positioning**: Precise control over drone position and rotation
+- **Lighting Controls**: Adjust scene lighting for better visualization
+- **Visual Style Options**: Customize the appearance of the 3D environment
+- **Performance Monitoring**: Optional stats display for performance tracking
+
 ## Point Cloud Viewer Features
 
 The Point Cloud Viewer component now supports:
@@ -59,12 +72,22 @@ PotreeConverter C:/path/to/pointcloud.las -o C:/output/path --generate-page
 3. Copy the output folder to the `dof-calculator/public/potree-data` directory
 4. In the Point Cloud Viewer, select the Potree renderer option
 
-### Troubleshooting
+### Using the Mission Planner
 
-- **Potree not loading**: Make sure you've run the setup script (`npm run setup-potree`) and that the necessary files exist in `dof-calculator/public/potree/build`.
-- **Point cloud not visible**: Check that sample files exist in `dof-calculator/public/samples`.
-- **Performance issues**: Use the performance profiles in the UI to match your system capabilities.
-- **NaN errors**: The component includes automatic handling for NaN values in point coordinates.
+1. **Select a Camera and Lens**: Choose from predefined camera and lens configurations
+2. **Position the Drone**: Use the Manual Drone Positioning controls to place the drone
+3. **Visualize the Camera View**: The camera frustum shows what will be captured
+4. **Adjust Settings**: Fine-tune lighting, background, and other visual parameters
+5. **Switch Views**: Use the view buttons to see the scene from different angles
+6. **Reset Position**: Use the reset button to return the drone to its default position
+
+### Mission Planner Controls
+
+- **Manual Drone Positioning**: Control the drone's X, Y, Z position and rotation angles
+- **Advanced Controls**: Toggle camera frustum, drone following, and performance stats
+- **Scene Options**: Adjust grid size and divisions
+- **Lighting Controls**: Change ambient and main light intensities
+- **Visual Style**: Select background color and toggle coordinate axes
 
 ## Implementation Details
 
@@ -83,19 +106,29 @@ The enhanced point cloud implementation includes:
    - Performance profile selection
    - Real-time feedback on rendering statistics
 
-3. **Setup scripts**:
-   - `setup-potree.js`: Downloads and configures Potree library
-   - `download-samples.js`: Downloads sample point cloud files
+3. **MissionPlanner.jsx**: Mission planning component with:
+   - Three.js for 3D scene rendering
+   - Camera frustum visualization
+   - Multiple view modes
+   - Customizable scene settings
 
 ## Future Enhancements
 
-Planned improvements for the point cloud viewer:
+Planned improvements:
 
-- Additional visualization modes (intensity, classification, etc.)
-- Support for more point cloud formats (E57, COPC, etc.)
-- Point cloud manipulation tools (cropping, filtering)
-- Measurement tools (distance, area, volume)
-- Integration with photogrammetry tools
+- **Mission Planner**:
+  - Flight path creation and editing
+  - Automatic mission optimization
+  - Export to drone flight controller formats
+  - Integration with real terrain data
+  - Collaborative mission planning
+
+- **Point Cloud Viewer**:
+  - Additional visualization modes (intensity, classification, etc.)
+  - Support for more point cloud formats (E57, COPC, etc.)
+  - Point cloud manipulation tools (cropping, filtering)
+  - Measurement tools (distance, area, volume)
+  - Integration with photogrammetry tools
 
 ## Depth of Field (DOF) Calculator
 
@@ -124,8 +157,8 @@ A comprehensive tool for photographers and photogrammetrists to calculate and vi
 
 1. Clone this repository:
    ```bash
-   git clone https://github.com/cdav1990/Photogrammetry_DOF.git
-   cd Photogrammetry_DOF
+   git clone https://github.com/cdav1990/MissionPlanner.git
+   cd MissionPlanner
    ```
 
 2. Install dependencies:
@@ -140,83 +173,13 @@ A comprehensive tool for photographers and photogrammetrists to calculate and vi
 
 4. Open your browser and navigate to the URL shown in your terminal (typically http://localhost:5173 or similar)
 
-## Usage
-
-1. **Select Camera Format**: Choose your camera's sensor size from the dropdown menu
-2. **Set Focal Length**: Enter the focal length of your lens in millimeters
-3. **Set Aperture**: Select the f-stop value for your lens
-4. **Adjust Focus Distance**: Use the slider or direct input to set your focus distance
-5. **Toggle Units**: Switch between meters and feet using the toggle button
-6. **View Results**: See the calculated DOF values and visualization
-
-## Technical Details
-
-### Core Calculations
-
-The calculator implements the following key formulas:
-
-- **Hyperfocal Distance**: The distance beyond which all objects appear acceptably sharp
-- **Circle of Confusion**: The maximum blur spot diameter that will still be perceived as a point by the human eye
-- **Near Limit**: The closest distance at which objects appear acceptably sharp
-- **Far Limit**: The furthest distance at which objects appear acceptably sharp
-- **Ground Sample Distance (GSD)**: The distance between pixel centers as measured on the ground
-
-### Technology Stack
-
-- **React**: Frontend UI library
-- **Vite**: Build tool and development server
-- **D3.js**: For data visualization
-- **CSS**: Custom styling with responsive design
-
-## Development
-
-### Project Structure
-
-```
-dof-calculator/
-├── public/            # Static assets
-├── src/
-│   ├── assets/        # Application assets
-│   │   ├── DOFCalculator.jsx    # Main calculator component
-│   │   └── DOFVisualization.jsx # Visualization component
-│   ├── data/          # Data files
-│   │   └── cameraLensData.json  # Camera and lens data
-│   ├── utils/         # Utility functions
-│   │   └── dofCalculations.js   # Core DOF calculation functions
-│   ├── App.jsx        # Main application component
-│   ├── App.css        # Application styles
-│   ├── index.css      # Global styles
-│   └── main.jsx       # Application entry point
-├── .gitignore         # Git ignore file
-├── package.json       # Project dependencies and scripts
-└── vite.config.js     # Vite configuration
-```
-
-### Building for Production
-
-To build the application for production:
-
-```bash
-npm run build
-```
-
-The built files will be in the `dist` directory.
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
 ## License
 
-None
+MIT License
 
 ## Acknowledgments
 
 - Formula references from photographic depth of field theory
-- Inspiration from existing DOF calculators while adding unique features for photogrammetry 
+- Inspiration from existing DOF calculators while adding unique features for photogrammetry
+- Three.js community for 3D rendering capabilities
+- Potree team for point cloud rendering technology 
